@@ -1,5 +1,5 @@
-import {Actor, Engine, ImageSource, Sprite, vec} from "excalibur";
-import {random_resource_key_by_type, Resources} from "./resources";
+import {Actor, Engine, Sprite} from "excalibur";
+import {random_resource_key_by_type, ImageResources} from "./resources";
 
 export type ComponentType = 'eyes' | 'mouth';
 
@@ -22,7 +22,7 @@ export class Potato extends Actor {
   onInitialize() {
     this.graphics.use(
       new Sprite({
-        image: Resources[this.key],
+        image: ImageResources[this.key],
         destSize: {width: this.width, height: this.height}
       })
     );
@@ -54,7 +54,7 @@ export class Component extends Actor {
   onInitialize() {
     this.graphics.use(
       new Sprite({
-        image: Resources[this.key],
+        image: ImageResources[this.key],
         destSize: {width: this.width, height: this.height}
       })
     );
@@ -93,51 +93,3 @@ export class Mouth extends Component {
     super({...defaults, ...props});
   }
 }
-
-export class Gremlin extends Actor {
-  constructor(props: any) {
-    const defaults = {
-      x: 150,
-      y: 150,
-      width: 40,
-      height: 60,
-    }
-    super({...defaults, ...props});
-  }
-}
-
-export function GremlinFactory(props: any, resource?: ImageSource, clickHandler?: (gremlin: Gremlin) => void) {
-  if (!resource && !clickHandler) {
-    const g = gremlins[Math.floor(Math.random() * gremlins.length)];
-    resource = g.resource;
-    clickHandler = g.clickHandler;
-  }
-  const gremlin = new Gremlin(props);
-  gremlin.onInitialize = function() {
-    this.graphics.use(new Sprite({image: resource as ImageSource, destSize: {width: this.width, height: this.height}}));
-    this.on('pointerdown', () => clickHandler? clickHandler(gremlin) : () => {});
-  }
-  return gremlin;
-}
-
-export const gremlins = [
-  {
-    resource: Resources.FlowerTop,
-    clickHandler: function(gremlin: Gremlin) {
-      console.log('arrrrrgh')
-      gremlin.actions.scaleTo(vec(0, 0), vec(2, 2)).die();
-    }
-  },
-  {
-    resource: Resources.EggHead,
-    clickHandler: function(gremlin: Gremlin) {
-      console.log('RARRGH!')
-      gremlin.actions.scaleTo(
-        vec(gremlin.scale.x * 2, gremlin.scale.y * 2),
-        vec(gremlin.scale.x * 2, gremlin.scale.y * 2)
-      );
-    }
-  },
-]
-
-
