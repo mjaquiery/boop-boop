@@ -21,7 +21,7 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Debug
-      uses: mxschmitt/action-tmate@v3
-#    - run: npm ci
+#    - name: Debug
+#      uses: mxschmitt/action-tmate@v3
+    - run: npm install
     - run: npm test
