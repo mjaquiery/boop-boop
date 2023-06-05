@@ -45,6 +45,8 @@ class MusicManager {
   tracks: Sound[];
   current_track: number;
   will_change_track: boolean;
+  iteration: number = 0;
+  callbacks: boolean[] = [];
 
   constructor(tracks: Sound[]) {
     this.tracks = tracks;
@@ -62,17 +64,30 @@ class MusicManager {
   }
 
   play() {
+    this.stop();
     if(this.will_change_track) {
       this.current_track = this.get_random_track();
       console.log(`Changing track to ${this.current_track}`);
       this.will_change_track = false;
     }
-    this.tracks[this.current_track].play().then(() => this.play());
+    this.tracks[this.current_track].play().then(() => {
+        if (this.callbacks[this.iteration]) {
+          this.play()
+        }
+    });
+    this.iteration++;
+  }
+
+  stop() {
+    this.tracks[this.current_track].stop();
   }
 }
 
+let music_manager: MusicManager | null = null;
+
 export default class Level_01 extends Scene {
   declare engine: Game;
+  complete: boolean = false;
   target_face: Face | null = null;
   current_face_components: Partial<{ [type in ComponentType]: Component }> = {};
   potato: Potato | null = null;
@@ -81,7 +96,6 @@ export default class Level_01 extends Scene {
   components: Component[] = [];
   component_spawn_delay_min = component_spawn_delay_min;
   component_spawn_delay_variation = component_spawn_variation;
-  component_spawn_enabled = true;
   celebration_text: Label | null = null;
   buckets: {targets: string[], distractors: string[]} = {targets: [], distractors: []};
 
@@ -94,12 +108,14 @@ export default class Level_01 extends Scene {
     Object.keys(SoundResources)
       .filter(k => k.startsWith('music_'))
       .forEach(k => tracks.push(SoundResources[k as keyof typeof SoundResources]));
-    this.music_manager = new MusicManager(tracks);
+    if (!music_manager)
+      music_manager = new MusicManager(tracks);
+    this.music_manager = music_manager;
     this.music_manager.will_change_track = true;
   }
 
   onActivate() {
-    this.component_spawn_enabled = true;
+    this.complete = false;
     this.createTarget();
 
     const potato = new Potato({
@@ -205,7 +221,7 @@ export default class Level_01 extends Scene {
 
   spawnComponent() {
     this.components = this.components.filter(component => !component.isKilled());
-    if (this.components.length < this.max_components && this.component_spawn_enabled) {
+    if (this.components.length < this.max_components && !this.complete) {
       const component_key = this.getComponentKey();
       if (component_key) {
         const third = (this.engine.drawWidth - component_size.width) / 3;
@@ -219,9 +235,9 @@ export default class Level_01 extends Scene {
         component.on('pointerdown', () => this.addComponentToFace(component));
         this.components.push(component);
         this.add(component);
-        const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('bubble_'));
-        const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
-        SoundResources[sound_key].play();
+        // const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('bubble_'));
+        // const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
+        // SoundResources[sound_key].play();
         const scale_speed = vec(
           100 * component_size.width / (component_size.width + component_size.height),
           100 * component_size.height / (component_size.width + component_size.height)
@@ -242,7 +258,7 @@ export default class Level_01 extends Scene {
   }
 
   addComponentToFace(component: Component) {
-    SoundResources.click.play();
+    // SoundResources.click.play();
     let copy: Component | null = null;
     const props = {
       x: component.center.x, y: component.center.y, ...component_size, key: component.key
@@ -262,8 +278,8 @@ export default class Level_01 extends Scene {
     this.add(copy);
     copy.actions.moveTo(this.potato!.pos.add(offsets[copy.type]), 1000).toPromise().then(() => {
       if (copy?.type && this.target_face && copy.type in this.target_face)
-        if (this.target_face[copy.type] === copy.key)
-          SoundResources.chime.play();
+        // if (this.target_face[copy.type] === copy.key)
+          // SoundResources.chime.play();
       this.checkWinCondition();
     });
   }
@@ -279,13 +295,14 @@ export default class Level_01 extends Scene {
       if (target[key] !== current[key]?.key) return;
     }
 
-    this.component_spawn_enabled = false;
+    this.complete = true;
 
     this.playWinAnimation()
       .then(() => this.engine.initialize());
   }
 
   playWinAnimation(duration: number = 500) {
+    this.music_manager.stop();
     SoundResources.fanfare.play();
     this.components.forEach(component => this.killComponent(component, vec(1000, 1000)))
     // Get target_potato to potato offset
@@ -380,6 +397,7 @@ export default class Level_01 extends Scene {
   }
 
   changeMusic() {
+    if (this.complete) return;
     this.music_manager.will_change_track = true;
     this.engine.clock.schedule(() => this.changeMusic(), this.music_change_frequency);
   }
