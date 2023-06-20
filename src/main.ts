@@ -35,6 +35,7 @@ export class Game extends Engine {
     }
     this.add('level_01', new Level_01())
     this.start(loader)
+      .then(() => this.screen.goFullScreen())
       .then(() => this.goToScene('level_01'))
   }
 }
