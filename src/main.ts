@@ -20,6 +20,20 @@ async function waitForFontLoad(font: any, timeout = 2000, interval = 100) {
   });
 }
 
+async function activateCamera() {
+  const video = document.createElement('video');
+  video.setAttribute('autoplay', '');
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('width', '1');
+  video.setAttribute('height', '1');
+  video.style.opacity = '0';
+  video.id = 'videoelement';
+  document.body.appendChild(video);
+  video.srcObject = await navigator.mediaDevices.getUserMedia({video: true});
+  await video.play();
+}
+
 export class Game extends Engine {
   constructor() {
     super({width: 800, height: 600});
@@ -35,6 +49,7 @@ export class Game extends Engine {
     }
     this.add('level_01', new Level_01())
     this.start(loader)
+      .then(() => activateCamera())
       .then(() => this.screen.goFullScreen())
       .then(() => this.goToScene('level_01'))
   }

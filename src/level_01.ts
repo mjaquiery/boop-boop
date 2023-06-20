@@ -11,7 +11,7 @@ import {
   vec,
   Vector
 } from "excalibur";
-import {Component, type ComponentType, Eyes, Mouth, Potato} from "./actors";
+import {Camera, Component, type ComponentType, Eyes, get_camera, Mouth, Potato} from "./actors";
 import {random_resource_key_by_type, ImageResources, SoundResources} from "./resources";
 import {Game} from "./main";
 
@@ -72,7 +72,7 @@ class MusicManager {
     }
     this.tracks[this.current_track].play().then(() => {
         if (this.callbacks[this.iteration]) {
-          this.play()
+          this.play();
         }
     });
     this.iteration++;
@@ -128,6 +128,8 @@ export default class Level_01 extends Scene {
     this.music_manager.play();
     this.engine.clock.schedule(() => this.changeMusic(), this.music_change_frequency)
     this.engine.clock.schedule(this.spawnComponent.bind(this), this.component_spawn_delay_min);
+
+    this.add(get_camera({x: this.engine.halfDrawWidth, y: 40}));
   }
 
   createTarget() {
@@ -331,6 +333,7 @@ export default class Level_01 extends Scene {
     }
 
     // Play celebration effects
+    this.engine.currentScene.camera.shake(5, 5, 1000)
     this.celebration_text = new Label({
       text: "It's a match!",
       font: new Font({

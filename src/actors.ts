@@ -1,4 +1,4 @@
-import {Actor, Engine, Sprite} from "excalibur";
+import {Actor, Canvas, Engine, Sprite} from "excalibur";
 import {random_resource_key_by_type, ImageResources} from "./resources";
 
 export type ComponentType = 'eyes' | 'mouth';
@@ -93,3 +93,21 @@ export class Mouth extends Component {
     super({...defaults, ...props});
   }
 }
+
+const canvas = new Canvas({
+  width: 60,
+  height: 80,
+  cache: false,  // If true draw once until flagged dirty again, otherwise draw to Canvas every frame
+  draw: (ctx) => {
+    const videoelement = document.getElementById("videoelement");
+    if (videoelement) {
+      // @ts-ignore
+      ctx.drawImage(videoelement, 0, 0, 60, 80);
+    }
+  }
+})
+export const get_camera = (props: any) => {
+  const camera = new Actor(props)
+  camera.graphics.use(canvas)
+  return camera
+};
