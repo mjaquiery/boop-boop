@@ -97,17 +97,27 @@ export class Mouth extends Component {
 const canvas = new Canvas({
   width: 60,
   height: 80,
-  cache: false,  // If true draw once until flagged dirty again, otherwise draw to Canvas every frame
+  cache: true,  // If true draw once until flagged dirty again, otherwise draw to Canvas every frame
   draw: (ctx) => {
-    const videoelement = document.getElementById("videoelement");
+    const videoelement = document.getElementById("WebcamFeed");
     if (videoelement) {
       // @ts-ignore
       ctx.drawImage(videoelement, 0, 0, 60, 80);
     }
   }
 })
+
+class WebcamFrame extends Actor {
+  declare canvas: Canvas;
+
+  constructor(props: any, canvas: Canvas) {
+    super(props);
+    this.canvas = canvas;
+  }
+}
+
 export const get_camera = (props: any) => {
-  const camera = new Actor(props)
+  const camera = new WebcamFrame(props, canvas)
   camera.graphics.use(canvas)
   return camera
 };

@@ -11,7 +11,7 @@ import {
   vec,
   Vector
 } from "excalibur";
-import {Camera, Component, type ComponentType, Eyes, get_camera, Mouth, Potato} from "./actors";
+import {Component, type ComponentType, Eyes, get_camera, Mouth, Potato} from "./actors";
 import {random_resource_key_by_type, ImageResources, SoundResources} from "./resources";
 import {Game} from "./main";
 
@@ -99,6 +99,8 @@ export default class Level_01 extends Scene {
   celebration_text: Label | null = null;
   buckets: {targets: string[], distractors: string[]} = {targets: [], distractors: []};
 
+  camera_display: ReturnType<typeof get_camera>| null = null;
+
   music_change_frequency = music_change_frequency;
   music_manager: MusicManager;
 
@@ -129,7 +131,10 @@ export default class Level_01 extends Scene {
     this.engine.clock.schedule(() => this.changeMusic(), this.music_change_frequency)
     this.engine.clock.schedule(this.spawnComponent.bind(this), this.component_spawn_delay_min);
 
-    this.add(get_camera({x: this.engine.halfDrawWidth, y: 40}));
+    if (!this.camera_display) {
+      this.camera_display = get_camera({x: this.engine.halfDrawWidth, y: 40});
+      this.add(this.camera_display);
+    }
   }
 
   createTarget() {
@@ -261,6 +266,7 @@ export default class Level_01 extends Scene {
 
   addComponentToFace(component: Component) {
     // SoundResources.click.play();
+    this.camera_display?.canvas.flagDirty();
     let copy: Component | null = null;
     const props = {
       x: component.center.x, y: component.center.y, ...component_size, key: component.key

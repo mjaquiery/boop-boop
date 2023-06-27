@@ -20,21 +20,9 @@ async function waitForFontLoad(font: any, timeout = 2000, interval = 100) {
   });
 }
 
-async function activateCamera() {
-  const video = document.createElement('video');
-  video.setAttribute('autoplay', '');
-  video.setAttribute('muted', '');
-  video.setAttribute('playsinline', '');
-  video.setAttribute('width', '1');
-  video.setAttribute('height', '1');
-  video.style.opacity = '0';
-  video.id = 'videoelement';
-  document.body.appendChild(video);
-  video.srcObject = await navigator.mediaDevices.getUserMedia({video: true});
-  await video.play();
-}
-
 export class Game extends Engine {
+  webcam?: HTMLVideoElement;
+
   constructor() {
     super({width: 800, height: 600});
   }
@@ -49,9 +37,23 @@ export class Game extends Engine {
     }
     this.add('level_01', new Level_01())
     this.start(loader)
-      .then(() => activateCamera())
+      .then(() => this.activateCamera())
       .then(() => this.screen.goFullScreen())
       .then(() => this.goToScene('level_01'))
+  }
+
+  async activateCamera() {
+    this.webcam = document.createElement('video');
+    this.webcam.setAttribute('autoplay', '');
+    this.webcam.setAttribute('muted', '');
+    this.webcam.setAttribute('playsinline', '');
+    this.webcam.setAttribute('width', '1');
+    this.webcam.setAttribute('height', '1');
+    this.webcam.style.opacity = '0';
+    this.webcam.id = 'WebcamFeed';
+    document.body.appendChild(this.webcam);
+    this.webcam.srcObject = await navigator.mediaDevices.getUserMedia({video: true});
+    await this.webcam.play();
   }
 }
 const game = new Game();
