@@ -11,9 +11,10 @@ import {
   vec,
   Vector
 } from "excalibur";
-import {Component, type ComponentType, Eyes, get_camera, Mouth, Potato} from "./actors";
+import {Component, type ComponentType, Eyes, Mouth, Potato} from "./actors";
 import {random_resource_key_by_type, ImageResources, SoundResources} from "./resources";
 import {Game} from "./main";
+import {PointerEvent} from "excalibur/build/dist/Input/PointerEvent";
 
 type Face = {
   eyes: string;
@@ -99,7 +100,7 @@ export default class Level_01 extends Scene {
   celebration_text: Label | null = null;
   buckets: {targets: string[], distractors: string[]} = {targets: [], distractors: []};
 
-  camera_display: ReturnType<typeof get_camera>| null = null;
+  // camera_display: ReturnType<typeof get_camera>| null = null;
 
   music_change_frequency = music_change_frequency;
   music_manager: MusicManager;
@@ -131,10 +132,10 @@ export default class Level_01 extends Scene {
     this.engine.clock.schedule(() => this.changeMusic(), this.music_change_frequency)
     this.engine.clock.schedule(this.spawnComponent.bind(this), this.component_spawn_delay_min);
 
-    if (!this.camera_display) {
-      this.camera_display = get_camera({x: this.engine.halfDrawWidth, y: 40});
-      this.add(this.camera_display);
-    }
+    // if (!this.camera_display) {
+    //   this.camera_display = get_camera({x: this.engine.halfDrawWidth, y: 40});
+    //   this.add(this.camera_display);
+    // }
   }
 
   createTarget() {
@@ -239,7 +240,7 @@ export default class Level_01 extends Scene {
         const component = this.getComponentByKey(component_key, props);
         if (!component) return;
         component.body.collisionType = CollisionType.Active;
-        component.on('pointerdown', () => this.addComponentToFace(component));
+        component.on('pointerdown', (clickEvent) => this.handleComponentClick(component, clickEvent));
         this.components.push(component);
         this.add(component);
         // const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('bubble_'));
@@ -264,9 +265,14 @@ export default class Level_01 extends Scene {
     component.actions.scaleTo(vec(0, 0), scale_speed).die()
   }
 
+  handleComponentClick(component: Component, clickEvent: PointerEvent) {
+    this.engine.reportToAPI(clickEvent);
+    this.addComponentToFace(component);
+  }
+
   addComponentToFace(component: Component) {
     // SoundResources.click.play();
-    this.camera_display?.canvas.flagDirty();
+    // this.camera_display?.canvas.flagDirty();
     let copy: Component | null = null;
     const props = {
       x: component.center.x, y: component.center.y, ...component_size, key: component.key

@@ -1,4 +1,4 @@
-import {Actor, Canvas, Engine, Sprite} from "excalibur";
+import {Actor, Engine, Sprite} from "excalibur";
 import {random_resource_key_by_type, ImageResources} from "./resources";
 
 export type ComponentType = 'eyes' | 'mouth';
@@ -93,31 +93,32 @@ export class Mouth extends Component {
     super({...defaults, ...props});
   }
 }
-
-const canvas = new Canvas({
-  width: 60,
-  height: 80,
-  cache: true,  // If true draw once until flagged dirty again, otherwise draw to Canvas every frame
-  draw: (ctx) => {
-    const videoelement = document.getElementById("WebcamFeed");
-    if (videoelement) {
-      // @ts-ignore
-      ctx.drawImage(videoelement, 0, 0, 60, 80);
-    }
-  }
-})
-
-class WebcamFrame extends Actor {
-  declare canvas: Canvas;
-
-  constructor(props: any, canvas: Canvas) {
-    super(props);
-    this.canvas = canvas;
-  }
-}
-
-export const get_camera = (props: any) => {
-  const camera = new WebcamFrame(props, canvas)
-  camera.graphics.use(canvas)
-  return camera
-};
+//
+// const canvas = new Canvas({
+//   opacity: 0,
+//   cache: true,  // If true draw once until flagged dirty again, otherwise draw to Canvas every frame
+//   draw: (ctx) => {
+//     const videoelement: HTMLVideoElement|null = document.getElementById("WebcamFeed") as HTMLVideoElement;
+//     if (videoelement) {
+//       ctx.canvas.height = videoelement.videoHeight;
+//       ctx.canvas.width = videoelement.videoWidth;
+//       ctx.drawImage(videoelement, 0, 0);
+//       console.log("snapshot", ctx.canvas.toDataURL())
+//     }
+//   }
+// })
+//
+// class WebcamFrame extends Actor {
+//   declare canvas: Canvas;
+//
+//   constructor(props: any, canvas: Canvas) {
+//     super(props);
+//     this.canvas = canvas;
+//   }
+// }
+//
+// export const get_camera = (props: any) => {
+//   const camera = new WebcamFrame(props, canvas)
+//   camera.graphics.use(canvas)
+//   return camera
+// };
