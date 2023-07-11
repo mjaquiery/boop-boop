@@ -1,27 +1,27 @@
 import {ImageSource, Sound} from "excalibur";
 
-let eyes: {[key: string]: ImageSource} = {}
+const eyes: {[key: string]: ImageSource} = {}
 const eye_count = 20;
 for (let i = 1; i <= eye_count; i++) {
   const name = `eyes_${i >= 10? i.toString() : "0" + i.toString()}`;
   eyes[name] = new ImageSource(`${import.meta.env.BASE_URL}images/eyes/${name}.png`);
 }
 
-let mouth: {[key: string]: ImageSource} = {}
+const mouth: {[key: string]: ImageSource} = {}
 const mouth_count = 24;
 for (let i = 1; i <= mouth_count; i++) {
   const name = `mouth_${i >= 10? i.toString() : "0" + i.toString()}`;
   mouth[name] = new ImageSource(`${import.meta.env.BASE_URL}images/mouth/${name}.png`);
 }
 
-let potato: {[key: string]: ImageSource} = {}
+const potato: {[key: string]: ImageSource} = {}
 const potato_count = 4;
 for (let i = 1; i <= potato_count; i++) {
   const name = `potato_${i >= 10? i.toString() : "0" + i.toString()}`;
   potato[name] = new ImageSource(`${import.meta.env.BASE_URL}images/${name}.png`);
 }
 
-let ImageResources: {[key: string]: ImageSource} = {
+const ImageResources: {[key: string]: ImageSource} = {
   ...eyes,
   ...mouth,
   ...potato,
