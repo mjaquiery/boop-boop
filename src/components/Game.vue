@@ -1,17 +1,23 @@
 <template>
   <canvas id="GameCanvas" />
+  <v-btn :ref="(el) => console.log">Start!</v-btn>
 </template>
 
 <script setup lang="ts">
   import GameEngine from "@/assets/game_src/main.ts";
-  import {markRaw, onMounted} from 'vue'
+  import {markRaw, onMounted, ref} from 'vue'
+  import {useSettingsStore} from "@/stores/settings";
+  const {to_raw} = useSettingsStore()
 
-  const props = defineProps<{consent?: boolean}>()
-
+  const button = ref<HTMLButtonElement|null>(null);
   let game: GameEngine|null = null;
 
   onMounted(() => {
-    game = markRaw(new GameEngine({canvasElementId: "GameCanvas", consent: !!props.consent}));
+    game = markRaw(new GameEngine({
+      canvasElementId: "GameCanvas",
+      startButtonElement: button.value as HTMLButtonElement,
+      get_settings_func: () => to_raw
+    }));
     game?.initialize();
   })
 </script>

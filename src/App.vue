@@ -3,26 +3,33 @@
     <v-app-bar :elevation="2" color="primary">
       <v-toolbar-title>Boop-Boop Game</v-toolbar-title>
       <v-spacer></v-spacer>
+      <v-btn icon @click="toggleSettingsOpen" >
+        <v-icon v-if="!settingsOpen">mdi-cog-outline</v-icon>
+        <v-icon v-else>mdi-cog</v-icon>
+      </v-btn>
       <v-btn icon>
         <v-icon>mdi-information-outline</v-icon>
       </v-btn>
     </v-app-bar>
     <v-main>
       <v-container class="fill-height">
-        <v-responsive class="align-center text-center fill-height">
+        <v-sheet v-if="settingsOpen" class="align-center text-center w-100 fill-height">
+          <SettingsPanel />
+        </v-sheet>
+        <v-responsive v-else class="align-center text-center fill-height">
           <v-carousel
             hide-delimiters
-            :show-arrows="consent !== undefined"
+            :show-arrows="send_data_consent !== undefined"
             class="fill-height"
             :continuous="false"
           >
 
             <v-carousel-item>
-              <Consent :granted="consent" @change="(v) => typeof v === 'boolean' && (consent = v)"/>
+              <Game />
             </v-carousel-item>
 
             <v-carousel-item>
-              <Game :consent="consent"/>
+              <Consent />
             </v-carousel-item>
 
           </v-carousel>
@@ -33,11 +40,14 @@
 </template>
 
 <script setup lang="ts">
-  import {VCarouselItem} from "vuetify/components/VCarousel";
-  import Game from "@/components/Game.vue";
-  import Consent from "@/Consent.vue";
-  import {Ref, ref} from "vue";
+import {storeToRefs} from "pinia";
+import {useSettingsStore} from "@/stores/settings";
+import {useDefaultStore} from "@/stores/default";
+import SettingsPanel from "@/SettingsPanel.vue";
+import Consent from "@/Consent.vue";
+import Game from "@/components/Game.vue";
 
-  const consent: Ref<boolean|undefined> = ref(undefined)
-
+const {settingsOpen} = storeToRefs(useDefaultStore())
+const {toggleSettingsOpen} = useDefaultStore()
+const {send_data_consent} = storeToRefs(useSettingsStore())
 </script>

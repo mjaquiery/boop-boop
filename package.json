@@ -33,7 +33,7 @@
   "homepage": "https://github.com/mjaquiery/boop-boop#readme",
   "dependencies": {
     "@mdi/font": "7.0.96",
-    "@excaliburjs/testing": "^0.25.0",
+    "pinia": "^2.1.4",
     "roboto-fontface": "*",
     "vue": "^3.2.0",
     "vue-router": "^4.0.0",
@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@babel/types": "^7.21.4",
+    "@excaliburjs/testing": "^0.25.0",
     "@types/node": "^18.15.0",
     "@types/webfontloader": "^1.6.35",
     "@vitejs/plugin-vue": "^4.0.0",

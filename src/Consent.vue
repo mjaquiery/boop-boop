@@ -1,7 +1,5 @@
 <script setup lang="ts">
-defineProps<{
-  granted?: boolean
-}>()
+import ConsentSwitch from "@/ConsentSwitch.vue";
 </script>
 
 <template>
@@ -46,15 +44,7 @@ defineProps<{
       If you don't want to send any pictures, you can still play the game.
     </p>
     <v-sheet color="secondary">
-      <v-switch
-        class="d-flex justify-center"
-        :inset="true"
-        :indeterminate="true"
-        v-bind="granted"
-        @change="(e) => $emit('change', e.target.checked)"
-        :color="granted? 'success' : 'secondary'"
-        label="I consent to my pictures being stored"
-      />
+      <ConsentSwitch />
     </v-sheet>
   </v-sheet>
 </template>
