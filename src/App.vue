@@ -13,7 +13,7 @@
     </v-app-bar>
     <v-main>
       <v-container class="fill-height">
-        <v-sheet v-if="settingsOpen" class="align-center text-center w-100 fill-height">
+        <v-sheet v-if="settingsOpen" class="align-center text-center w-100 fill-height position-relative">
           <SettingsPanel />
         </v-sheet>
         <v-responsive v-else class="align-center text-center fill-height">

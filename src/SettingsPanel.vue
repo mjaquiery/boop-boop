@@ -4,10 +4,9 @@ import {useSettingsStore} from "@/stores/settings";
 import {adult_settings, child_settings, Settings} from "@/assets/game_src/settings";
 import {computed, ref, watch} from "vue";
 import ConsentSwitch from "@/ConsentSwitch.vue";
+import {useDefaultStore} from "@/stores/default";
 
-defineProps<{
-  granted?: boolean
-}>()
+const {settingsOpen} = storeToRefs(useDefaultStore())
 
 const {
   send_data_consent,
@@ -104,7 +103,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
     <h2>Customise settings</h2>
   </v-btn>
 
-  <v-sheet v-if="custom_settings" class="w-100">
+  <v-sheet v-if="custom_settings" class="w-100 mb-16">
     <h3>Component settings</h3>
     <div class="text-caption">Maximum number of pieces onscreen at once</div>
     <v-slider
@@ -163,6 +162,13 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
       suffix="ms"
     />
   </v-sheet>
+  <v-btn
+    @click="() => settingsOpen = false"
+    variant="tonal"
+    prepend-icon="mdi-check"
+    :block="true"
+    class="close-settings"
+  >Close</v-btn>
 </template>
 
 <style scoped>
@@ -171,5 +177,10 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 }
 .v-divider {
   margin: 1rem;
+}
+.close-settings {
+  position: absolute;
+  bottom: 1rem;
+  width: 100%;
 }
 </style>
