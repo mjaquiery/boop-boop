@@ -4,7 +4,6 @@ import Level_01 from "./level_01";
 import {ImageResources, SoundResources} from "./resources";
 import {Settings, settings} from "./settings";
 import API_Client, {API_GameData} from "./API_Client";
-import BoopLoader from "@/assets/game_src/BoopLoader";
 
 
 export default class Game extends Engine {
@@ -12,7 +11,6 @@ export default class Game extends Engine {
   webcam_canvas?: HTMLCanvasElement;
   api_client: API_Client = new API_Client();
   get_settings_func: () => Settings = () => settings;
-  start_button_element?: HTMLButtonElement;
 
   constructor(props: any) {
     let get_settings_func = null;
@@ -26,7 +24,7 @@ export default class Game extends Engine {
       this.get_settings_func = get_settings_func
   }
   initialize() {
-    const loader = new BoopLoader({startButtonElement: this.start_button_element});
+    const loader = new Loader();
     for (const resource in ImageResources) {
       loader.addResource(ImageResources[resource]);
     }
