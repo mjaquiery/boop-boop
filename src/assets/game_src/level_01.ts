@@ -1,19 +1,27 @@
 import {
-  ActionSequence,
-  CollisionType, Color, EmitterType,
-  Font, FontUnit,
+  ActionSequence, Actor,
+  CollisionType,
+  Color,
+  EmitterType,
+  Font,
+  FontUnit,
   GraphicsGroup,
-  Label,
-  ParallelActions, ParticleEmitter,
-  Scene, Sound,
+  Label, Line,
+  MoveTo,
+  ParallelActions,
+  ParticleEmitter,
+  RepeatForever,
+  RotationType,
+  Scene,
+  Sound,
   Sprite,
-  TextAlign,
+  TextAlign, Timer,
   vec,
   Vector
 } from "excalibur";
 import {PointerEvent} from "excalibur/build/dist/Input/PointerEvent";
-import {Component, type ComponentType, Eyes, Mouth, Potato} from "./actors";
-import {random_resource_key_by_type, ImageResources, SoundResources} from "./resources";
+import {Component, type ComponentType, Eyes, Mouth, Potato, Thief} from "./actors";
+import {ImageResources, random_resource_key_by_type, SoundResources} from "./resources";
 import Game from "./main";
 import MusicManager from "./MusicManager";
 
@@ -40,6 +48,7 @@ let music_manager: MusicManager | null = null;
 
 export default class Level_01 extends Scene {
   declare engine: Game;
+  timers: {[key: string]: Timer} = {}
   complete: boolean = false;
   target_face: Face | null = null;
   current_face_components: Partial<{ [type in ComponentType]: Component }> = {};
@@ -48,7 +57,13 @@ export default class Level_01 extends Scene {
   components: Component[] = [];
   music_manager: MusicManager;
   celebration_text: Label | null = null;
+  particle_emitters: ParticleEmitter[] = [];
   buckets: {targets: string[], distractors: string[]} = {targets: [], distractors: []};
+  potato_thief: Thief | null = null;
+
+  _potato_thief_spawn_point: Vector = vec(0, 0);
+  _rotation_adjustment: number = - Math.PI / 2;
+  _game_over_delay: number = 5000;
 
   constructor() {
     super();
@@ -67,8 +82,30 @@ export default class Level_01 extends Scene {
     return this.engine.settings;
   }
 
+  clean() {
+    this.potato?.kill()
+    this.potato = null;
+    this.target_potato?.kill()
+    this.target_potato = null;
+    this.potato_thief?.kill()
+    this.potato_thief = null;
+    this.components.forEach(c => c.kill())
+    this.components = []
+    Object.values(this.current_face_components).forEach(c => c.kill())
+    this.current_face_components = {}
+    this.celebration_text?.kill()
+    this.celebration_text = null
+    this.particle_emitters?.forEach(e => e.kill())
+    this.particle_emitters = []
+    Object.values(this.timers).forEach(t => t.cancel())
+    this.timers = {}
+    this.buckets = {targets: [], distractors: []};
+  }
+
   onActivate() {
     this.complete = false;
+    this.clean();
+
     this.createTarget();
 
     const potato = new Potato({
@@ -79,13 +116,40 @@ export default class Level_01 extends Scene {
     this.potato = potato;
 
     this.music_manager.play();
-    this.engine.clock.schedule(() => this.changeMusic(), this.settings.music_change_delay)
-    this.engine.clock.schedule(this.spawnComponent.bind(this), this.settings.component_spawn_delay_min);
+
+    // Set up timers
+    this.timers = {
+      changeMusic: new Timer({
+        fcn: this.changeMusic.bind(this),
+        interval: this.settings.music_change_delay,
+        repeats: true,
+      }),
+      spawnComponent: new Timer({
+        fcn: this.spawnComponent.bind(this),
+        interval: this.settings.component_spawn_delay_min,
+        randomRange: [0, this.settings.component_spawn_delay_variation],
+        repeats: true,
+      }),
+      spawnThief: new Timer({
+        fcn: this.spawnThief.bind(this),
+        interval: this.settings.needy_potato_delay_min,
+        randomRange: [0, this.settings.needy_potato_delay_variation],
+        repeats: true,
+      })
+    }
+    Object.values(this.timers).forEach(t => {
+      this.add(t)
+      t.start()
+    })
 
     // if (!this.camera_display) {
     //   this.camera_display = get_camera({x: this.engine.halfDrawWidth, y: 40});
     //   this.add(this.camera_display);
     // }
+  }
+
+  onDeactivate() {
+    this.clean();
   }
 
   createTarget() {
@@ -214,10 +278,6 @@ export default class Level_01 extends Scene {
         )
       }
     }
-    this.engine.clock.schedule(
-      this.spawnComponent.bind(this),
-      this.settings.component_spawn_delay_min + Math.random() * this.settings.component_spawn_delay_variation
-    );
   }
 
   killComponent(component: Component, scale_speed: Vector) {
@@ -272,12 +332,14 @@ export default class Level_01 extends Scene {
     this.complete = true;
 
     this.playWinAnimation()
-      .then(() => this.engine.initialize());
+      .then(() => this.engine.goToScene('level_01'))
   }
 
-  playWinAnimation(duration: number = 500) {
+  playWinAnimation(duration: number = 1000, complete_after: number = 0) {
+    if (complete_after === 0) complete_after = Math.max(this._game_over_delay, duration);
     this.music_manager.stop();
     SoundResources.fanfare.play();
+    this.stopNeediness(true);
     this.components.forEach(component => this.killComponent(component, vec(1000, 1000)))
     // Get target_potato to potato offset
     const offset = vec(this.potato!.width, this.potato!.pos.y - this.target_potato!.pos.y);
@@ -305,7 +367,7 @@ export default class Level_01 extends Scene {
     }
 
     // Play celebration effects
-    this.engine.currentScene.camera.shake(5, 5, 1000)
+    this.engine.currentScene.camera.shake(5, 5, Math.max(1000, duration));
     this.celebration_text = new Label({
       text: "It's a match!",
       font: new Font({
@@ -318,30 +380,30 @@ export default class Level_01 extends Scene {
       z: 5
     });
     this.add(this.celebration_text);
-    const emitter = new ParticleEmitter({});
-    emitter.pos = vec(this.engine.halfDrawWidth - 5, this.celebration_text.pos.y);
-    emitter.emitterType = EmitterType.Circle;
-    emitter.radius = 235;
-    emitter.minVel = 10;
-    emitter.maxVel = 200;
-    emitter.minAngle = 0;
-    emitter.maxAngle = 6.2;
-    emitter.isEmitting = true;
-    emitter.emitRate = 300;
-    emitter.opacity = 1;
-    emitter.fadeFlag = true;
-    emitter.particleLife = 1000;
-    emitter.maxSize = 6;
-    emitter.minSize = 1;
-    emitter.startSize = 3;
-    emitter.endSize = 13;
-    emitter.acceleration = vec(-8, 800);
-    emitter.beginColor = Color.Red;
-    emitter.endColor = Color.Transparent;
-    emitter.isEmitting = true;  // should the emitter be emitting
+    const blue_emitter = new ParticleEmitter({});
+    blue_emitter.pos = vec(this.engine.halfDrawWidth - 5, this.celebration_text.pos.y);
+    blue_emitter.emitterType = EmitterType.Circle;
+    blue_emitter.radius = 235;
+    blue_emitter.minVel = 10;
+    blue_emitter.maxVel = 200;
+    blue_emitter.minAngle = 0;
+    blue_emitter.maxAngle = 6.2;
+    blue_emitter.isEmitting = true;
+    blue_emitter.emitRate = 300;
+    blue_emitter.opacity = 1;
+    blue_emitter.fadeFlag = true;
+    blue_emitter.particleLife = 1000;
+    blue_emitter.maxSize = 6;
+    blue_emitter.minSize = 1;
+    blue_emitter.startSize = 3;
+    blue_emitter.endSize = 13;
+    blue_emitter.acceleration = vec(-8, 800);
+    blue_emitter.beginColor = Color.Red;
+    blue_emitter.endColor = Color.Transparent;
+    blue_emitter.isEmitting = true;  // should the emitter be emitting
     // add the emitter as a child actor, it will draw on top of the parent actor
     // and move with the parent
-    this.add(emitter);
+    this.add(blue_emitter);
     const orange_emitter = new ParticleEmitter({});
     orange_emitter.pos = vec(this.engine.halfDrawWidth + 5, this.celebration_text.pos.y);
     orange_emitter.emitterType = EmitterType.Circle;
@@ -366,14 +428,124 @@ export default class Level_01 extends Scene {
     // add the emitter as a child actor, it will draw on top of the parent actor
     // and move with the parent
     this.add(orange_emitter);
+    this.particle_emitters = [blue_emitter, orange_emitter];
 
     // Return a timeout promise for the duration
-    return new Promise<void>(resolve => this.engine.clock.schedule(resolve, duration));
+    return new Promise<void>(resolve => {
+      const t = new Timer({
+        fcn: resolve.bind(this),
+        interval: complete_after,
+        repeats: false
+      })
+      this.add(t);
+      t.start();
+    });
   }
 
   changeMusic() {
     if (this.complete) return;
     this.music_manager.will_change_track = true;
-    this.engine.clock.schedule(() => this.changeMusic(), this.settings.music_change_delay);
+  }
+
+  spawnThief() {
+    if (this.complete) return;
+    if (!this.potato_thief?.active) {
+      this.startNeediness();
+    }
+  }
+
+  startNeediness() {
+    // The player's potato gets a thief component
+    if (this.potato_thief?.active) return;
+    this.potato_thief = new Thief({height: 50, width: 50, duration: this.settings.needy_potato_duration});
+    this._potato_thief_spawn_point = vec(
+      Math.random() * this.engine.drawWidth,
+      Math.random() * this.engine.drawWidth
+    );
+    // this._potato_thief_spawn_point = vec(0, 0)
+    this.potato_thief.pos = this._potato_thief_spawn_point;
+    // this.potato_thief.pos = vec(0, this.engine.halfDrawHeight);
+    this.potato_thief.rotation = this.potato_thief.pos.sub(this.potato!.pos).toAngle() + this._rotation_adjustment;
+    this.potato_thief.actions.moveTo(
+      this.potato!.pos.x,
+      this.potato!.pos.y,
+      1000
+    )
+      .toPromise()
+      .then(() => {
+        const anim = this.potato_thief!.needyAnimation;
+        if (anim !== null) {
+          this.potato_thief!.graphics.use(anim)
+          anim.events.on('end', this.needsUnmet.bind(this))
+          this.potato_thief!.on('pointerdown', () => this.stopNeediness())  // TODO: why is this not working?
+        }
+      })
+    this.add(this.potato_thief)
+  }
+
+  stopNeediness(immediate = false) {
+    // The thief component is removed from the player's potato
+    if (!this.potato_thief?.active) return;
+    this.potato_thief.actions.clearActions();
+    this.potato_thief.kill();
+    this.potato_thief = null;
+  }
+
+  needsUnmet() {
+    // The thief steals the potato -> game over
+    this.complete = true;
+    this.potato_thief.off('pointerdown')
+
+    this.music_manager.stop();
+    SoundResources.failure.play();
+
+    this.components.forEach(component => this.killComponent(component, vec(1000, 1000)))
+    this.target_potato!.kill()
+
+    const angle = this.potato_thief?.rotation - this._rotation_adjustment + Math.PI
+    const v = Vector.fromAngle(angle)
+    const potato_destination = v.scale(this.engine.drawWidth).add(this.potato.pos)
+    const thief_offset = this.potato_thief!.pos.sub(this.potato!.pos)
+    const thief_destination = potato_destination.add(thief_offset)
+    this.potato!.actions.moveTo(potato_destination.x, potato_destination.y, 100).die()
+    this.potato_thief?.actions.moveTo(thief_destination.x, thief_destination.y, 100).die()
+
+    console.log(this._potato_thief_spawn_point)
+    const lines = [
+      // [vec(0, 0), vec(this.engine.drawWidth, this.engine.drawHeight)],
+      [this.potato.pos, this._potato_thief_spawn_point],
+      [this.potato.pos, potato_destination],
+      [this.potato.pos, v],
+    ]
+
+    Object.values(this.current_face_components).forEach(component => {
+      const a = angle + (Math.PI * Math.random() * (Math.random() > 0.5 ? 1 : -1))
+      const destination = Vector.fromAngle(a).scale(this.engine.drawWidth * 2).add(component.pos)
+      let rotate_speed = Math.random() * 25 + 10
+      component.actions.runAction(new ParallelActions([
+        new RepeatForever(component, (ctx) => {
+          rotate_speed *= 0.8
+          ctx.rotateBy(a, rotate_speed, a > 0? RotationType.Clockwise : RotationType.CounterClockwise)
+        }),
+        new MoveTo(component, destination.x, destination.y, Math.random() * 50 + 50),
+      ]))
+    })
+
+    // this.engine.currentScene.camera.shake(5, 5, 1000)
+
+    this.celebration_text = new Label({
+      text: "Potato stolen!",
+      font: new Font({
+        family: 'Monomaniac One',
+        size: 52,
+        unit: FontUnit.Px,
+        textAlign: TextAlign.Center
+      }),
+      pos: vec(this.engine.halfDrawWidth, this.engine.drawHeight / 5),
+      z: 5
+    });
+    this.add(this.celebration_text);
+
+    this.engine.clock.schedule(() => this.engine.goToScene('level_01'), this._game_over_delay)
   }
 }

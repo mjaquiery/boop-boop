@@ -6,6 +6,7 @@ node_modules
 test/images/actual.png
 test/images/diff-*.png
 *.pdn
+.img_dev
 
 # local env files
 .env.local

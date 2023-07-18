@@ -1,3 +1,7 @@
+## alien_ship.wav
+BurghRecords https://freesound.org/people/BurghRecords/sounds/408241/
+[CC-BY 3.0](http://creativecommons.org/licenses/by/3.0/)
+
 ## bubble_01.wav
 JavierSerrat https://freesound.org/people/JavierSerrat/sounds/485065/  
 [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
@@ -32,6 +36,10 @@ FunWithSound https://freesound.org/people/FunWithSound/sounds/456965/
 
 ## fanfare.mp3
 FunWithSound https://freesound.org/people/FunWithSound/sounds/456966/  
+[Public Domain](http://creativecommons.org/publicdomain/zero/1.0/)
+
+## failure.wav
+Fupicat https://freesound.org/people/Fupicat/sounds/538151/
 [Public Domain](http://creativecommons.org/publicdomain/zero/1.0/)
 
 ## music_01.mp3

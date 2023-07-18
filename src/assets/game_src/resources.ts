@@ -25,6 +25,7 @@ const ImageResources: {[key: string]: ImageSource} = {
   ...eyes,
   ...mouth,
   ...potato,
+  thief: new ImageSource(`${import.meta.env.BASE_URL}images/rocket/saucer_sheet.png`),
 };
 
 export const random_resource_key_by_type: (type: string) => string = (type: string) => {
@@ -34,15 +35,16 @@ export const random_resource_key_by_type: (type: string) => string = (type: stri
 export const random_resource_by_type: (type: string) => ImageSource = (type: string) => ImageResources[random_resource_key_by_type(type)]
 
 const SoundResources = {
-  click: new Sound(`${import.meta.env.BASE_URL}sounds/click.mp3`),
-  chime: new Sound(`${import.meta.env.BASE_URL}sounds/chime.mp3`),
-  fanfare: new Sound(`${import.meta.env.BASE_URL}sounds/fanfare.mp3`),
   bubble_01: new Sound(`${import.meta.env.BASE_URL}sounds/bubble_01.wav`),
   bubble_02: new Sound(`${import.meta.env.BASE_URL}sounds/bubble_02.wav`),
   bubble_03: new Sound(`${import.meta.env.BASE_URL}sounds/bubble_03.wav`),
   bubble_04: new Sound(`${import.meta.env.BASE_URL}sounds/bubble_04.wav`),
   bubble_05: new Sound(`${import.meta.env.BASE_URL}sounds/bubble_05.wav`),
   bubble_06: new Sound(`${import.meta.env.BASE_URL}sounds/bubble_06.wav`),
+  chime: new Sound(`${import.meta.env.BASE_URL}sounds/chime.mp3`),
+  click: new Sound(`${import.meta.env.BASE_URL}sounds/click.mp3`),
+  fanfare: new Sound(`${import.meta.env.BASE_URL}sounds/fanfare.mp3`),
+  failure: new Sound(`${import.meta.env.BASE_URL}sounds/failure.wav`),
   music_01: new Sound(`${import.meta.env.BASE_URL}sounds/music_01.mp3`),
   music_02: new Sound(`${import.meta.env.BASE_URL}sounds/music_02.wav`),
   music_03: new Sound(`${import.meta.env.BASE_URL}sounds/music_03.mp3`),

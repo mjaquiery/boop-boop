@@ -14,9 +14,10 @@
 </template>
 
 <script setup lang="ts">
-  import GameEngine from "@/assets/game_src/main.ts";
+  import GameEngine from "@/assets/game_src/main";
   import {markRaw, onMounted} from 'vue'
   import {useSettingsStore} from "@/stores/settings";
+  import {DevTool} from "@excaliburjs/dev-tools";
   const {to_raw} = useSettingsStore()
 
   let game: GameEngine|null = null;
@@ -27,6 +28,7 @@
       get_settings_func: () => to_raw
     }));
     game?.initialize();
+    // new DevTool(game);
   })
 </script>
 

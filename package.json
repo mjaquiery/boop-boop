@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@babel/types": "^7.21.4",
+    "@excaliburjs/dev-tools": "^0.27.1",
     "@excaliburjs/testing": "^0.25.0",
     "@types/node": "^18.15.0",
     "@types/webfontloader": "^1.6.35",

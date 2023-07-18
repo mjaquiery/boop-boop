@@ -27,7 +27,7 @@ export const adult_settings: Settings = {
   music_change_delay: 60000,
   needy_potato_delay_min: 5000,
   needy_potato_delay_variation: 2500,
-  needy_potato_duration: 2000,
+  needy_potato_duration: 5000,
 }
 
 export const child_settings: Settings = {
