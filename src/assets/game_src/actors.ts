@@ -106,6 +106,7 @@ export class Thief extends Actor {
     }
   });
   needyAnimation: Animation|null = null;
+  unneedyAnimation: Animation|null = null;
 
   constructor(props?: any) {
     const defaults = {
@@ -119,6 +120,19 @@ export class Thief extends Actor {
     delete props.duration;
     super({...defaults, ...props});
     this.duration = duration || 1000;
+  }
+
+  makeUnneedyAnimation(duration: number = 1000) {
+    if (this.unneedyAnimation === null) {
+      this.unneedyAnimation = Animation.fromSpriteSheet(
+        this.spriteSheet,
+        range(0, (this.needyAnimation?.currentFrameIndex || 0) + 1),
+        duration / this.needyAnimation!.frames.length || 1,
+        AnimationStrategy.Freeze
+      )
+      this.unneedyAnimation.frames.reverse()
+    }
+    return this.unneedyAnimation;
   }
 
   onInitialize() {

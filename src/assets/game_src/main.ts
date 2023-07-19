@@ -103,7 +103,7 @@ export default class Game extends Engine {
     return this.get_settings_func();
   }
 
-  reportToAPI(clickEvent: PointerEvent) {
+  async reportToAPI(clickEvent: PointerEvent) {
     const game_data: API_GameData = this.game_data
     const click_data = clickEvent
     let image = "";

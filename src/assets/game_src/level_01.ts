@@ -1,12 +1,12 @@
 import {
-  ActionSequence, Actor,
+  ActionSequence, canonicalizeAngle,
   CollisionType,
   Color,
   EmitterType,
   Font,
   FontUnit,
   GraphicsGroup,
-  Label, Line,
+  Label,
   MoveTo,
   ParallelActions,
   ParticleEmitter,
@@ -15,7 +15,8 @@ import {
   Scene,
   Sound,
   Sprite,
-  TextAlign, Timer,
+  TextAlign,
+  Timer,
   vec,
   Vector
 } from "excalibur";
@@ -48,7 +49,7 @@ let music_manager: MusicManager | null = null;
 
 export default class Level_01 extends Scene {
   declare engine: Game;
-  timers: {[key: string]: Timer} = {}
+  spawn_timers: {[key: string]: Timer} = {}
   complete: boolean = false;
   target_face: Face | null = null;
   current_face_components: Partial<{ [type in ComponentType]: Component }> = {};
@@ -97,8 +98,8 @@ export default class Level_01 extends Scene {
     this.celebration_text = null
     this.particle_emitters?.forEach(e => e.kill())
     this.particle_emitters = []
-    Object.values(this.timers).forEach(t => t.cancel())
-    this.timers = {}
+    Object.values(this.spawn_timers).forEach(t => t.cancel())
+    this.spawn_timers = {}
     this.buckets = {targets: [], distractors: []};
   }
 
@@ -118,7 +119,7 @@ export default class Level_01 extends Scene {
     this.music_manager.play();
 
     // Set up timers
-    this.timers = {
+    this.spawn_timers = {
       changeMusic: new Timer({
         fcn: this.changeMusic.bind(this),
         interval: this.settings.music_change_delay,
@@ -137,7 +138,7 @@ export default class Level_01 extends Scene {
         repeats: true,
       })
     }
-    Object.values(this.timers).forEach(t => {
+    Object.values(this.spawn_timers).forEach(t => {
       this.add(t)
       t.start()
     })
@@ -264,9 +265,9 @@ export default class Level_01 extends Scene {
         );
         this.components.push(component);
         this.add(component);
-        // const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('bubble_'));
-        // const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
-        // SoundResources[sound_key].play();
+        const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('bubble_'));
+        const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
+        SoundResources[sound_key].play();
         const scale_speed = vec(
           100 * component_size.width / (component_size.width + component_size.height),
           100 * component_size.height / (component_size.width + component_size.height)
@@ -291,7 +292,7 @@ export default class Level_01 extends Scene {
   }
 
   addComponentToFace(component: Component) {
-    // SoundResources.click.play();
+    SoundResources.click.play();
     // this.camera_display?.canvas.flagDirty();
     let copy: Component | null = null;
     const props = {
@@ -312,9 +313,10 @@ export default class Level_01 extends Scene {
     this.add(copy);
     copy.actions.moveTo(this.potato!.pos.add(offsets[copy.type]), 1000).toPromise().then(() => {
       if (copy?.type && this.target_face && copy.type in this.target_face)
-        // if (this.target_face[copy.type] === copy.key)
-        // SoundResources.chime.play();
-        this.checkWinCondition();
+        if (this.target_face[copy.type] === copy.key) {
+          SoundResources.chime.play();
+          this.checkWinCondition();
+        }
     });
   }
 
@@ -462,13 +464,14 @@ export default class Level_01 extends Scene {
       Math.random() * this.engine.drawWidth,
       Math.random() * this.engine.drawWidth
     );
-    // this._potato_thief_spawn_point = vec(0, 0)
+    const target_point = this.potato!.pos
+      .add(vec(Math.random() * 25, Math.random() * 25))
+      .sub(vec(Math.random() * 25, Math.random() * 25));
     this.potato_thief.pos = this._potato_thief_spawn_point;
-    // this.potato_thief.pos = vec(0, this.engine.halfDrawHeight);
-    this.potato_thief.rotation = this.potato_thief.pos.sub(this.potato!.pos).toAngle() + this._rotation_adjustment;
+    this.potato_thief.rotation = this.potato_thief.pos.sub(target_point).toAngle() + this._rotation_adjustment;
     this.potato_thief.actions.moveTo(
-      this.potato!.pos.x,
-      this.potato!.pos.y,
+      target_point.x,
+      target_point.y,
       1000
     )
       .toPromise()
@@ -477,49 +480,72 @@ export default class Level_01 extends Scene {
         if (anim !== null) {
           this.potato_thief!.graphics.use(anim)
           anim.events.on('end', this.needsUnmet.bind(this))
+          anim.events.on('frame', () => {
+            const mumble_matches = Object.keys(SoundResources).filter(k => k.startsWith('mumble_'));
+            const mumble_key = mumble_matches[Math.floor(Math.random() * mumble_matches.length)] as keyof typeof SoundResources;
+            SoundResources[mumble_key].play();
+          })
           this.potato_thief!.on('pointerdown', () => this.stopNeediness())  // TODO: why is this not working?
         }
       })
     this.add(this.potato_thief)
   }
 
-  stopNeediness(immediate = false) {
+  stopNeediness(fast = false) {
     // The thief component is removed from the player's potato
     if (!this.potato_thief?.active) return;
     this.potato_thief.actions.clearActions();
-    this.potato_thief.kill();
-    this.potato_thief = null;
+    this.potato_thief.needyAnimation!.pause();
+    this.potato_thief.makeUnneedyAnimation(fast? 250 : 1000);
+    this.potato_thief.graphics.use(this.potato_thief.unneedyAnimation!);
+    this.potato_thief.off('pointerdown')
+    this.potato_thief.unneedyAnimation?.events.on('end', () => this.shooThief());
+
+    if (!fast) {
+      this.camera.shake(10, 10, 200)
+      const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('annoyed_'));
+      const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
+      SoundResources[sound_key].play();
+    }
+  }
+
+  shooThief() {
+    if (!this.potato_thief?.active) return;
+    const v = this.potato_thief.pos
+      .sub(this._potato_thief_spawn_point!)
+      .normalize()
+      .scale(this.engine.drawWidth * 2);
+    this.potato_thief.actions.moveTo(v.x, v.y, 1000)
+      .callMethod(() => {
+        this.potato_thief!.kill();
+        this.potato_thief = null;
+      })
   }
 
   needsUnmet() {
     // The thief steals the potato -> game over
     this.complete = true;
-    this.potato_thief.off('pointerdown')
+    this.potato_thief!.off('pointerdown')
 
     this.music_manager.stop();
-    SoundResources.failure.play();
+    const laugh_matches = Object.keys(SoundResources).filter(k => k.startsWith('laugh_'));
+    const laugh_key = laugh_matches[Math.floor(Math.random() * laugh_matches.length)] as keyof typeof SoundResources;
+    SoundResources.failure.play()
+      .then(() => SoundResources[laugh_key].play());
 
     this.components.forEach(component => this.killComponent(component, vec(1000, 1000)))
     this.target_potato!.kill()
 
-    const angle = this.potato_thief?.rotation - this._rotation_adjustment + Math.PI
-    const v = Vector.fromAngle(angle)
-    const potato_destination = v.scale(this.engine.drawWidth).add(this.potato.pos)
+    const angle = this.potato_thief!.rotation - this._rotation_adjustment + Math.PI
+    const v = Vector.fromAngle(canonicalizeAngle(angle))
+    const potato_destination = v.scale(this.engine.drawWidth).add(this.potato!.pos)
     const thief_offset = this.potato_thief!.pos.sub(this.potato!.pos)
     const thief_destination = potato_destination.add(thief_offset)
     this.potato!.actions.moveTo(potato_destination.x, potato_destination.y, 100).die()
     this.potato_thief?.actions.moveTo(thief_destination.x, thief_destination.y, 100).die()
 
-    console.log(this._potato_thief_spawn_point)
-    const lines = [
-      // [vec(0, 0), vec(this.engine.drawWidth, this.engine.drawHeight)],
-      [this.potato.pos, this._potato_thief_spawn_point],
-      [this.potato.pos, potato_destination],
-      [this.potato.pos, v],
-    ]
-
     Object.values(this.current_face_components).forEach(component => {
-      const a = angle + (Math.PI * Math.random() * (Math.random() > 0.5 ? 1 : -1))
+      const a = angle + (Math.PI * Math.random() * (Math.random() > 0.5 ? 1 : -1) * 0.5)
       const destination = Vector.fromAngle(a).scale(this.engine.drawWidth * 2).add(component.pos)
       let rotate_speed = Math.random() * 25 + 10
       component.actions.runAction(new ParallelActions([
@@ -531,7 +557,7 @@ export default class Level_01 extends Scene {
       ]))
     })
 
-    // this.engine.currentScene.camera.shake(5, 5, 1000)
+    this.engine.currentScene.camera.shake(5, 5, 1000)
 
     this.celebration_text = new Label({
       text: "Potato stolen!",
