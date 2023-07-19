@@ -15,10 +15,14 @@ type NeedyPotatoSettings = {
 // Keep this flat so that it can be safely mutated by the settings store
 export type Settings = {
   send_data_consent?: boolean;  // Whether to send data to the server
+  start_level?: number;  // The level to start at
+  difficulty_step: number;  // How much to increase difficulty by each level
   music_change_delay: number;  // How frequently the music changes
 } & ComponentsSettings & NeedyPotatoSettings
 
 export const adult_settings: Settings = {
+  start_level: 0,
+  difficulty_step: 0.1,
   max_components: 20,
   component_spawn_delay_min: 500,
   component_spawn_delay_variation: 200,
@@ -31,6 +35,8 @@ export const adult_settings: Settings = {
 }
 
 export const child_settings: Settings = {
+  start_level: 0,
+  difficulty_step: 0.5,
   max_components: 10,
   component_spawn_delay_min: 1000,
   component_spawn_delay_variation: 500,

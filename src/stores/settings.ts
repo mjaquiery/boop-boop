@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
-import { settings as _settings, adult_settings, child_settings, Settings } from "@/assets/game_src/settings";
+import { settings as _settings, adult_settings, child_settings, Settings } from "@/assets/game_src/utils/settings";
 
 export const useSettingsStore = defineStore('game', {
   state: () => ({..._settings, send_data_consent: undefined}),
   getters: {
     to_raw: (state: Settings) => ({
       send_data_consent: state.send_data_consent,
+      difficulty_step: state.difficulty_step,
+      start_level: state.start_level,
       max_components: state.max_components,
       component_spawn_delay_min: state.component_spawn_delay_min,
       component_spawn_delay_variation: state.component_spawn_delay_variation,

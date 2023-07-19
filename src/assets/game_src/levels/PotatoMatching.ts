@@ -21,10 +21,15 @@ import {
   Vector
 } from "excalibur";
 import {PointerEvent} from "excalibur/build/dist/Input/PointerEvent";
-import {Component, type ComponentType, Eyes, Mouth, Potato, Thief} from "./actors";
-import {ImageResources, random_resource_key_by_type, SoundResources} from "./resources";
-import Game from "./main";
-import MusicManager from "./MusicManager";
+import Component, {type ComponentType} from "../actors/Component";
+import Eyes from "../actors/Eyes";
+import Mouth from "../actors/Mouth";
+import Potato from "../actors/Potato";
+import Thief from "../actors/Thief";
+import {ImageResources, random_resource_key_by_type, SoundResources} from "../utils/resources";
+import Game, {level_names} from "../main";
+import MusicManager from "../utils/MusicManager";
+import {LevelStatistics} from "@/assets/game_src/utils/Statistics";
 
 type Face = {
   eyes: string;
@@ -47,7 +52,7 @@ const offsets: {[type in ComponentType]: Vector} = {
 
 let music_manager: MusicManager | null = null;
 
-export default class Level_01 extends Scene {
+export default class PotatoMatching extends Scene {
   declare engine: Game;
   spawn_timers: {[key: string]: Timer} = {}
   complete: boolean = false;
@@ -65,6 +70,7 @@ export default class Level_01 extends Scene {
   _potato_thief_spawn_point: Vector = vec(0, 0);
   _rotation_adjustment: number = - Math.PI / 2;
   _game_over_delay: number = 5000;
+  _start_time: number = 0;
 
   constructor() {
     super();
@@ -79,8 +85,16 @@ export default class Level_01 extends Scene {
     this.music_manager.will_change_track = true;
   }
 
+  get stats() {
+    return this.engine.current_level_statistics;
+  }
+
   get settings() {
     return this.engine.settings;
+  }
+
+  get settings_adjusted() {
+    return this.engine.settings_adjusted;
   }
 
   clean() {
@@ -106,6 +120,8 @@ export default class Level_01 extends Scene {
   onActivate() {
     this.complete = false;
     this.clean();
+    this.engine.level_statistics.push(new LevelStatistics());
+    this._start_time = this.engine.clock.now();
 
     this.createTarget();
 
@@ -127,13 +143,13 @@ export default class Level_01 extends Scene {
       }),
       spawnComponent: new Timer({
         fcn: this.spawnComponent.bind(this),
-        interval: this.settings.component_spawn_delay_min,
+        interval: this.settings_adjusted.component_spawn_delay_min,
         randomRange: [0, this.settings.component_spawn_delay_variation],
         repeats: true,
       }),
       spawnThief: new Timer({
         fcn: this.spawnThief.bind(this),
-        interval: this.settings.needy_potato_delay_min,
+        interval: this.settings_adjusted.needy_potato_delay_min,
         randomRange: [0, this.settings.needy_potato_delay_variation],
         repeats: true,
       })
@@ -220,8 +236,7 @@ export default class Level_01 extends Scene {
       if (target) {
         key = this.buckets.targets[Math.floor(Math.random() * this.buckets.targets.length)];
         if (i > max_iterations / 2) target = false;
-      }
-      else
+      } else
         key = this.buckets.distractors[Math.floor(Math.random() * this.buckets.distractors.length)];
       if (this.components.find(c => c.key === key)) continue;
       const current_face_component = this.current_face_components[key.split('_')[0] as ComponentType];
@@ -275,7 +290,7 @@ export default class Level_01 extends Scene {
         component.actions.scaleTo(vec(component_size.width, component_size.height), scale_speed);
         this.engine.clock.schedule(
           () => this.killComponent(component, scale_speed),
-          this.settings.component_lifetime
+          this.settings_adjusted.component_lifetime
         )
       }
     }
@@ -316,7 +331,9 @@ export default class Level_01 extends Scene {
         if (this.target_face[copy.type] === copy.key) {
           SoundResources.chime.play();
           this.checkWinCondition();
-        }
+          this.stats.clicks.value++;
+        } else
+          this.stats.misclicks.value++;
     });
   }
 
@@ -332,12 +349,14 @@ export default class Level_01 extends Scene {
     }
 
     this.complete = true;
+    this.engine.difficulty_level += 1;
 
     this.playWinAnimation()
-      .then(() => this.engine.goToScene('level_01'))
+      .then(() => this.engine.goToScene(level_names.SPLASHSCREEN))
   }
 
   playWinAnimation(duration: number = 1000, complete_after: number = 0) {
+    this.stats.time_taken.value = this.engine.clock.now() - this._start_time;
     if (complete_after === 0) complete_after = Math.max(this._game_over_delay, duration);
     this.music_manager.stop();
     SoundResources.fanfare.play();
@@ -459,7 +478,7 @@ export default class Level_01 extends Scene {
   startNeediness() {
     // The player's potato gets a thief component
     if (this.potato_thief?.active) return;
-    this.potato_thief = new Thief({height: 50, width: 50, duration: this.settings.needy_potato_duration});
+    this.potato_thief = new Thief({height: 50, width: 50, duration: this.settings_adjusted.needy_potato_duration});
     this._potato_thief_spawn_point = vec(
       Math.random() * this.engine.drawWidth,
       Math.random() * this.engine.drawWidth
@@ -485,7 +504,10 @@ export default class Level_01 extends Scene {
             const mumble_key = mumble_matches[Math.floor(Math.random() * mumble_matches.length)] as keyof typeof SoundResources;
             SoundResources[mumble_key].play();
           })
-          this.potato_thief!.on('pointerdown', () => this.stopNeediness())  // TODO: why is this not working?
+          this.potato_thief!.on('pointerdown', () => {
+            this.stats.thieves_shooed.value++;
+            this.stopNeediness()
+          })
         }
       })
     this.add(this.potato_thief)
@@ -572,6 +594,6 @@ export default class Level_01 extends Scene {
     });
     this.add(this.celebration_text);
 
-    this.engine.clock.schedule(() => this.engine.goToScene('level_01'), this._game_over_delay)
+    this.engine.clock.schedule(() => this.engine.goToScene(level_names.SCORESHEET), this._game_over_delay)
   }
 }

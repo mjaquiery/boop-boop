@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
-import {adult_settings, child_settings, Settings} from "@/assets/game_src/settings";
+import {adult_settings, child_settings, Settings} from "@/assets/game_src/utils/settings";
 import {computed, ref, watch} from "vue";
-import ConsentSwitch from "@/ConsentSwitch.vue";
+import ConsentSwitch from "@/components/ConsentSwitch.vue";
 import {useDefaultStore} from "@/stores/default";
 
 const {settingsOpen} = storeToRefs(useDefaultStore())
 
 const {
   send_data_consent,
+  difficulty_step,
+  start_level,
   max_components,
   component_spawn_delay_min,
   component_spawn_delay_variation,
@@ -73,6 +75,8 @@ const needy_potato_delay = computed({
 })
 const all_settings = computed(() => ({
   send_data_consent: send_data_consent?.value,
+  difficulty_step: difficulty_step.value,
+  start_level: start_level?.value,
   max_components: max_components.value,
   component_spawn_delay_min: component_spawn_delay_min.value,
   component_spawn_delay_variation: component_spawn_delay_variation.value,
@@ -160,6 +164,25 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
       v-model="needy_potato_duration"
       @update:model-value="value => needy_potato_duration =  clamp(value, 200, 10000)"
       suffix="ms"
+    />
+    <h3>Difficulty settings</h3>
+    <div class="text-caption">How much does the difficulty increase each level?</div>
+    <v-slider
+      min="0"
+      max="0.25"
+      step="0.01"
+      thumb-label="always"
+      v-model="difficulty_step"
+      @update:model-value="value => difficulty_step =  clamp(value, 0.01, 0.25)"
+    />
+    <div class="text-caption">What level do you start at?</div>
+    <v-slider
+      min="0"
+      max="100"
+      step="1"
+      thumb-label="always"
+      v-model="start_level"
+      @update:model-value="value => start_level =  clamp(value, 0, 100)"
     />
   </v-sheet>
   <v-btn

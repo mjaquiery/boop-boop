@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ConsentSwitch from "@/ConsentSwitch.vue";
+import ConsentSwitch from "@/components/ConsentSwitch.vue";
 </script>
 
 <template>

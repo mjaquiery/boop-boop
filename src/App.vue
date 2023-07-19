@@ -43,8 +43,8 @@
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
 import {useDefaultStore} from "@/stores/default";
-import SettingsPanel from "@/SettingsPanel.vue";
-import Consent from "@/Consent.vue";
+import SettingsPanel from "@/components/SettingsPanel.vue";
+import Consent from "@/components/Consent.vue";
 import Game from "@/components/Game.vue";
 
 const {settingsOpen} = storeToRefs(useDefaultStore())
