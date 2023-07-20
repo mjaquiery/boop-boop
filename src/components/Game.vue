@@ -11,41 +11,104 @@
       </v-btn>
     </div>
     <!-- The UI will automatically be drawn above the game due to z-indexing -->
-    <div id="excalibur-ui">
+    <div id="excalibur-ui" class="w-100 d-flex align-center justify-center fill-height" ref="ui">
       <v-sheet id="excalibur-scoresheet" class="ui">
-        <div class="fill-height w-50">
-          <div v-if="game">
+        <v-card class="pa-2">
+          <v-card-title>Game statistics</v-card-title>
+          <v-card-text v-if="updateTrigger">
             <v-table>
               <thead>
               <tr>
                 <th class="text-left">
-                  Statistic
+
                 </th>
-                <th class="text-left">
-                  Value
+                <th class="text-right" :class="last_score!.score.value > highscore!.score.value? 'high' : ''">
+                  Last game
+                </th>
+                <th class="text-right" v-if="highscore">
+                  Your highscore
                 </th>
               </tr>
               </thead>
               <tbody>
               <tr
-                v-for="stat in Object.values(game!.statistics.all).filter(s => !s.advanced || advanced_stats)"
+                v-if="last_score"
+                v-for="stat in Object.values(last_score).filter(s => !s.advanced || advanced_stats)"
                 :key="stat.name"
               >
-                <td>{{ stat.name }}</td>
-                <td>{{ stat.value }}</td>
+                <td
+                  class="text-left"
+                  :class="stat.value > get_highscore(stat)!.value? 'high' : ''"
+                >
+                  {{ get_name_with_unit(stat) }}
+                </td>
+                <td
+                  class="text-right"
+                  :class="stat.value > get_highscore(stat)!.value? 'high' : ''"
+                >
+                  {{ get_display_value(stat) }}
+                </td>
+                <td class="text-right"  v-if="highscore">{{ get_display_value(get_highscore(stat)) }}</td>
               </tr>
               </tbody>
             </v-table>
 
-            <v-btn
-              @click="() => advanced_stats = !advanced_stats"
-              :prepend-icon="advanced_stats? 'mdi-chevron-up' : 'mdi-chevron-down'"
-            >
-              {{ advanced_stats? 'Hide' : 'Show' }} Advanced stats
-            </v-btn>
-            <v-btn @click="() => {game!.initialize()}">Play again?</v-btn>
-          </div>
-        </div>
+            <v-card-actions>
+              <v-btn @click="() => advanced_stats = !advanced_stats">
+                {{ advanced_stats? 'Hide' : 'Show' }} Advanced stats
+              </v-btn>
+              <v-spacer />
+              <v-btn prepend-icon="mdi-play" variant="tonal" color="success" @click="() => {
+            ui?.classList.remove('scoresheet')
+            game!.initialize()
+          }">Play again?</v-btn>
+            </v-card-actions>
+          </v-card-text>
+        </v-card>
+      </v-sheet>
+      <v-sheet id="excalibur-splashscreen" class="ui">
+        <v-card v-if="updateTrigger" :loading="true" class="pa-2">
+          <v-card-title>
+            Level {{ game!.difficulty_level + 1 }}
+          </v-card-title>
+          <v-card-subtitle>Get ready...</v-card-subtitle>
+          <v-card-text>
+            <v-list lines="three" class="text-start">
+              <v-list-item
+                title="Match the potato"
+              >
+                <template v-slot:prepend>
+                  <v-icon size="x-large">mdi-gesture-tap-button</v-icon>
+                </template>
+                <template v-slot:subtitle>
+                  <strong>Make your potato match the potato at the top</strong> of the screen
+                  by clicking on the correct pieces as they appear.
+                </template>
+              </v-list-item>
+              <v-list-item
+                title="Be quick"
+              >
+                <template v-slot:prepend>
+                  <v-icon size="x-large">mdi-timer-alert-outline</v-icon>
+                </template>
+                <template v-slot:subtitle>
+                  Each level will get harder, because the pieces will disappear more quickly.
+                </template>
+              </v-list-item>
+              <v-list-item
+                title="Watch out"
+              >
+                <template v-slot:prepend>
+                  <v-icon size="x-large">mdi-ufo-outline</v-icon>
+                </template>
+                <template v-slot:subtitle>
+                  Watch out for the <strong>Potato Thieves</strong> who are trying to steal
+                  your potato. If they steal your potato, it's <strong>game over</strong>.
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
       </v-sheet>
     </div>
   </div>
@@ -53,17 +116,19 @@
 
 <script setup lang="ts">
 import GameEngine from "@/assets/game_src/main";
-import {markRaw, onMounted, ref} from 'vue'
+import {computed, markRaw, onMounted, ref, watch} from 'vue'
 import {useSettingsStore} from "@/stores/settings";
 import {DevTool} from "@excaliburjs/dev-tools";
+import {GameStatisticsSummary, Statistic} from "@/assets/game_src/utils/Statistics";
 const {to_raw} = useSettingsStore()
-import { getCurrentInstance } from 'vue'
-const instance = getCurrentInstance();
 
-const forceUpdate = () => instance?.proxy?.$forceUpdate();
-
+const ui = ref<HTMLDivElement|null>(null)
+const advanced_stats = ref(false);
+const updateTrigger = ref(0)
+const forceUpdate = () => updateTrigger.value++;
 let game: GameEngine|null = null;
-let advanced_stats = ref(false);
+let last_score: GameStatisticsSummary|null = null;
+let highscore: GameStatisticsSummary|null = null;
 
 onMounted(() => {
   game = markRaw(new GameEngine({
@@ -74,13 +139,37 @@ onMounted(() => {
   game?.initialize();
   // new DevTool(game);
 })
+
+watch(updateTrigger, () => {
+  if (!game) return;
+  last_score = game.last_game_score;
+  highscore = game.highscore;
+})
+
+const get_highscore: (stat: Statistic) => Statistic|null = (stat: Statistic) => {
+  if (!highscore) return null;
+  const out = Object.values(highscore).find((s: Statistic) => s.name === stat.name)
+  if (!out) return null;
+  return out;
+}
+
+const get_display_value: (stat: Statistic|null) => string = (stat: Statistic|null) => {
+  if (!stat) return '';
+  const v = stat.value % 1 > 0? stat.value.toFixed(2) : stat.value.toString()
+  return v.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+const get_name_with_unit: (stat: Statistic) => string = (stat: Statistic) => {
+  return stat.unit? `${stat.name} (${stat.unit})` : stat.name;
+}
 </script>
 
 <style>
 div {position: relative;}
 #excalibur-play-root {
-  left: 0 !important;
-  top: -6em !important;
+  position: absolute;
+  top: unset !important;
+  left: unset !important;
 }
 #excalibur-play {
   display: none;
@@ -99,6 +188,12 @@ div {position: relative;}
      be relative to this element, not the document providing more accurate
      positioning, since the canvas will be at (0, 0) */
   position: relative;
+  /* Flexbox used to center game */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  min-width: 300px;
 }
 
 #excalibur-root #excalibur-ui {
@@ -106,12 +201,29 @@ div {position: relative;}
   position: absolute;
   top: 0;
   left: 0;
+  z-index: -1;
+}
+#excalibur-root #excalibur-ui.enabled {
+  z-index: 1;
 }
 
-#excalibur-root #excalibur-ui .ui {display: none;}
+#excalibur-root #excalibur-ui .ui {
+  display: none;
+
+  max-width: 600px;
+  width: 100%;
+}
 
 #excalibur-root #excalibur-ui.scoresheet #excalibur-scoresheet {
   /* This will make the UI appear on top of the canvas */
   display: block;
+}
+#excalibur-root #excalibur-ui.splashscreen #excalibur-splashscreen {
+  /* This will make the UI appear on top of the canvas */
+  display: block;
+}
+
+.high {
+  font-weight: bold;
 }
 </style>

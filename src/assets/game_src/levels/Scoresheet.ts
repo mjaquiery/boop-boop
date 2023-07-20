@@ -1,13 +1,13 @@
 import {Scene} from "excalibur";
-import Game from "../main";
+import Game, {UI_overlays} from "../main";
 
 export default class Scoresheet extends Scene {
   declare engine: Game
   onActivate() {
-    document.getElementById('excalibur-ui')!.classList.add('scoresheet')
-    this.engine.update_wrapper()
+    this.engine.last_game_score = this.engine.statistics.all
+    this.engine.UI_overlay = UI_overlays.SCORESHEET
   }
   onDeactivate() {
-    document.getElementById('excalibur-ui')!.classList.remove('scoresheet')
+    this.engine.UI_overlay = null
   }
 }

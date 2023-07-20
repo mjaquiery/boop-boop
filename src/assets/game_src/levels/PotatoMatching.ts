@@ -68,9 +68,11 @@ export default class PotatoMatching extends Scene {
   potato_thief: Thief | null = null;
 
   _potato_thief_spawn_point: Vector = vec(0, 0);
+  _potato_thief_leaving: boolean = false;
   _rotation_adjustment: number = - Math.PI / 2;
   _game_over_delay: number = 5000;
   _start_time: number = 0;
+  _settings_cache: Settings|null = null;
 
   constructor() {
     super();
@@ -90,11 +92,9 @@ export default class PotatoMatching extends Scene {
   }
 
   get settings() {
-    return this.engine.settings;
-  }
-
-  get settings_adjusted() {
-    return this.engine.settings_adjusted;
+    if (!this._settings_cache)
+      this._settings_cache = this.engine.settings_adjusted;
+    return this._settings_cache;
   }
 
   clean() {
@@ -115,6 +115,7 @@ export default class PotatoMatching extends Scene {
     Object.values(this.spawn_timers).forEach(t => t.cancel())
     this.spawn_timers = {}
     this.buckets = {targets: [], distractors: []};
+    this._settings_cache = null;
   }
 
   onActivate() {
@@ -143,13 +144,13 @@ export default class PotatoMatching extends Scene {
       }),
       spawnComponent: new Timer({
         fcn: this.spawnComponent.bind(this),
-        interval: this.settings_adjusted.component_spawn_delay_min,
+        interval: this.settings.component_spawn_delay_min,
         randomRange: [0, this.settings.component_spawn_delay_variation],
         repeats: true,
       }),
       spawnThief: new Timer({
         fcn: this.spawnThief.bind(this),
-        interval: this.settings_adjusted.needy_potato_delay_min,
+        interval: this.settings.needy_potato_delay_min,
         randomRange: [0, this.settings.needy_potato_delay_variation],
         repeats: true,
       })
@@ -283,14 +284,17 @@ export default class PotatoMatching extends Scene {
         const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('bubble_'));
         const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
         SoundResources[sound_key].play();
+        const lifetime = this.settings.component_lifetime;
+        const inflation_duration = lifetime / 3;
+        const inflation_speed = Math.max(component_size.width, component_size.height) / inflation_duration * 1000
         const scale_speed = vec(
-          100 * component_size.width / (component_size.width + component_size.height),
-          100 * component_size.height / (component_size.width + component_size.height)
+          inflation_speed * component_size.width / (component_size.width + component_size.height),
+          inflation_speed * component_size.height / (component_size.width + component_size.height)
         )
         component.actions.scaleTo(vec(component_size.width, component_size.height), scale_speed);
         this.engine.clock.schedule(
           () => this.killComponent(component, scale_speed),
-          this.settings_adjusted.component_lifetime
+          this.settings.component_lifetime
         )
       }
     }
@@ -478,7 +482,8 @@ export default class PotatoMatching extends Scene {
   startNeediness() {
     // The player's potato gets a thief component
     if (this.potato_thief?.active) return;
-    this.potato_thief = new Thief({height: 50, width: 50, duration: this.settings_adjusted.needy_potato_duration});
+    this._potato_thief_leaving = false;
+    this.potato_thief = new Thief({height: 50, width: 50, duration: this.settings.needy_potato_duration});
     this._potato_thief_spawn_point = vec(
       Math.random() * this.engine.drawWidth,
       Math.random() * this.engine.drawWidth
@@ -515,7 +520,8 @@ export default class PotatoMatching extends Scene {
 
   stopNeediness(fast = false) {
     // The thief component is removed from the player's potato
-    if (!this.potato_thief?.active) return;
+    if (!this.potato_thief?.active || this._potato_thief_leaving) return;
+    this._potato_thief_leaving = true;
     this.potato_thief.actions.clearActions();
     this.potato_thief.needyAnimation!.pause();
     this.potato_thief.makeUnneedyAnimation(fast? 250 : 1000);

@@ -1,4 +1,4 @@
-import {clamp, Engine, Input, Loader} from "excalibur";
+import {clamp, DisplayMode, Engine, Input, Loader} from "excalibur";
 import {PointerEvent} from "excalibur/build/dist/Input/PointerEvent";
 import PotatoMatching from "./levels/PotatoMatching";
 import Scoresheet from "./levels/Scoresheet";
@@ -6,12 +6,22 @@ import {ImageResources, SoundResources} from "./utils/resources";
 import {Settings, settings} from "./utils/settings";
 import API_Client, {API_GameData} from "./utils/API_Client";
 import Splashscreen from "@/assets/game_src/levels/Splashscreen";
-import GameStatistics, {LevelStatistics} from "@/assets/game_src/utils/Statistics";
+import GameStatistics, {GameStatisticsSummary, LevelStatistics} from "@/assets/game_src/utils/Statistics";
 
 export const level_names = {
   POTATO_MATCHING: 'PotatoMatching',
   SCORESHEET: 'Scoresheet',
   SPLASHSCREEN: 'Splashscreen',
+}
+
+export const local_storage_keys = {
+  HIGHSCORE: 'highscore',
+  LAST_GAME_SCORE: 'last_game_score',
+}
+
+export const UI_overlays = {
+  SCORESHEET: 'scoresheet',
+  SPLASHSCREEN: 'splashscreen',
 }
 
 export default class Game extends Engine {
@@ -35,17 +45,25 @@ export default class Game extends Engine {
       update_wrapper = props.update_wrapper
       delete props.update_wrapper
     }
-    super({pointerScope: Input.PointerScope.Canvas, ...props});
+    super({
+      height: 600,
+      width: 800,
+      displayMode: DisplayMode.FillContainer,
+      pointerScope: Input.PointerScope.Canvas,
+      ...props
+    });
     if (get_settings_func)
       this.get_settings_func = get_settings_func
     this.update_wrapper = update_wrapper
     this.statistics = new GameStatistics(this)
   }
   initialize() {
+    this.updateScores()
     this.statistics = new GameStatistics(this)
     this.level_statistics = []
     this.difficulty_level = this.settings.start_level??0;
     const loader = new Loader();
+    loader.playButtonText = "Begin";
     for (const resource in ImageResources) {
       loader.addResource(ImageResources[resource]);
     }
@@ -53,7 +71,6 @@ export default class Game extends Engine {
       const r = resource as keyof typeof SoundResources;
       loader.addResource(SoundResources[r])
     }
-    this.add(level_names.POTATO_MATCHING, new PotatoMatching())
     this.add(level_names.SCORESHEET, new Scoresheet())
     this.add(level_names.SPLASHSCREEN, new Splashscreen())
     this.start(loader)
@@ -64,6 +81,12 @@ export default class Game extends Engine {
       ]))
       .then(() => this.screen.goFullScreen('excalibur-root'))
       .then(() => this.goToScene(level_names.SPLASHSCREEN))
+  }
+
+  loadPotatoMatching() {
+    this.remove(level_names.POTATO_MATCHING)
+    this.add(level_names.POTATO_MATCHING, new PotatoMatching())
+    this.goToScene(level_names.POTATO_MATCHING)
   }
 
   async activateCamera() {
@@ -131,6 +154,23 @@ export default class Game extends Engine {
     }
   }
 
+  get UI_overlay(): keyof UI_overlays|null {
+    const classes = document.getElementById('excalibur-ui')!.classList;
+    if (!classes || !classes.contains('enabled'))
+      return null;
+    return Object.values(UI_overlays).find((overlay) => classes.contains(overlay));
+  }
+
+  set UI_overlay(overlay: keyof UI_overlays|null) {
+    const classes = document.getElementById('excalibur-ui')!.classList
+    if (!classes) throw new Error("Failed to get excalibur-ui element");
+    this.update_wrapper()
+    classes.toggle('enabled', overlay !== null);
+    for (const o of Object.values(UI_overlays)) {
+      classes.toggle(o, o === overlay);
+    }
+  }
+
   get settings() {
     return this.get_settings_func();
   }
@@ -140,10 +180,19 @@ export default class Game extends Engine {
       if (typeof settings[key] !== "number")
         return settings[key];
       const raw = settings[key] as number;
-      const adjusted = raw * (1 - this.difficulty_level * settings.difficulty_step);
+      const adjusted = raw * (1 - adjustment);
       return clamp(adjusted, 0, raw);
     }
     const settings = this.settings;
+    // Scale down the difficulty increase as the difficulty increases
+    let adjustment = 0;
+    let step = settings.difficulty_step;
+    for (let i = 0; i < this.difficulty_level; i++) {
+      adjustment += Math.max(step, 0.01);
+      step *= 0.9;
+    }
+    adjustment = clamp(adjustment, 0.01, 0.99);
+    console.log(`Adjusting timers to ${((1 - adjustment) * 100).toFixed(2)}% of base`)
     return {
       ...settings,
       component_lifetime: adjust("component_lifetime"),
@@ -151,6 +200,45 @@ export default class Game extends Engine {
       needy_potato_delay_min: adjust("component_lifetime"),
       needy_potato_duration: adjust("needy_potato_duration"),
     } as Settings;
+  }
+
+  _getScore(key: keyof local_storage_keys) {
+    const score = localStorage.getItem(key);
+    if (score === null) return null;
+    try {
+      return JSON.parse(score) as GameStatisticsSummary;
+    } catch (e) {
+      console.error("Failed to parse score", e);
+      console.warn(`Clearing score ${key}`);
+      localStorage.removeItem(key);
+      return null;
+    }
+  }
+
+  get last_game_score() {
+    return this._getScore(local_storage_keys.LAST_GAME_SCORE);
+  }
+
+  set last_game_score(last_game_score: GameStatisticsSummary) {
+    localStorage.setItem('last_game_score', JSON.stringify(last_game_score));
+  }
+
+  get highscore() {
+    return this._getScore(local_storage_keys.HIGHSCORE);
+  }
+
+  set highscore(highscore: GameStatisticsSummary) {
+    localStorage.setItem('highscore', JSON.stringify(highscore));
+  }
+
+  updateScores() {
+    const last_game_score = this.last_game_score;
+    const highscore = this.highscore;
+    if (last_game_score !== null) {
+      if (highscore === null || last_game_score.score.value > highscore.score.value) {
+        this.highscore = last_game_score;
+      }
+    }
   }
 
   async reportToAPI(clickEvent: PointerEvent) {

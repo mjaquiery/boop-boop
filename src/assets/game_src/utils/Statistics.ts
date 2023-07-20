@@ -4,6 +4,7 @@ export type StatisticProperties = {
   name: string;
   description: string;
   value: number;
+  unit?: string;
   advanced?: boolean;
 }
 
@@ -11,55 +12,62 @@ export class Statistic {
   name: string;
   description: string;
   value: number = 0;
+  unit?: string;
   advanced?: boolean;
 
   constructor(properties: StatisticProperties) {
     if (!properties.name) throw new Error('Statistic must have a name');
     this.name = properties.name;
     this.description = properties.description || '';
+    this.unit = properties.unit;
     this.value = properties.value || 0;
     this.advanced = properties.advanced || false;
   }
 }
 
 export class TimeTakenStatistic extends Statistic {
-  constructor(value: number = 0) {
+  constructor(value: number = 0, props: Partial<StatisticProperties> = {}) {
     super({
-      name: 'Time taken',
+      name: 'Playing time',
       description: 'Time taken to complete level',
+      unit: 's',
       value,
+      ...props
     });
   }
 }
 
 export class ClicksStatistic extends Statistic {
-  constructor(value: number = 0) {
+  constructor(value: number = 0, props: Partial<StatisticProperties> = {}) {
     super({
       name: 'Clicks',
-      description: 'Total clicks',
+      description: 'Helpful pieces clicked',
       value,
+      ...props
     });
   }
 }
 
 export class MisclicksStatistic extends Statistic {
-  constructor(value: number = 0) {
+  constructor(value: number = 0, props: Partial<StatisticProperties> = {}) {
     super({
       name: 'Misclicks',
-      description: 'Total misclicks',
+      description: 'Unhelpful pieces clicked',
       value,
-      advanced: true
+      advanced: true,
+      ...props
     });
   }
 }
 
 export class ThievesShooedStatistic extends Statistic {
-  constructor(value: number = 0) {
+  constructor(value: number = 0, props: Partial<StatisticProperties> = {}) {
     super({
       name: 'Thieves shooed',
       description: 'Total thieves shooed',
       value,
-      advanced: true
+      advanced: true,
+      ...props
     });
   }
 }
@@ -85,6 +93,15 @@ export class LevelStatistics {
   }
 }
 
+export type GameStatisticsSummary = {
+  time_taken: TimeTakenStatistic;
+  clicks: ClicksStatistic;
+  misclicks: MisclicksStatistic;
+  thieves_shooed: ThievesShooedStatistic;
+  level: Statistic;
+  score: Statistic;
+}
+
 export default class GameStatistics {
   owner: Game;
 
@@ -93,37 +110,32 @@ export default class GameStatistics {
   }
 
   get time_taken() {
-    return new Statistic({
-      name: 'Playing time',
-      description: 'Total time spent playing',
-      value: this.owner.level_statistics.map(stat => stat.time_taken.value).reduce((a, b) => a + b, 0),
-    })
+    return new TimeTakenStatistic(
+      this.owner.level_statistics
+        .map(stat => stat.time_taken.value)
+        .reduce((a, b) => a + b, 0) / 1000,
+      {
+        description: 'Total time spent playing',
+      }
+    )
   }
 
   get clicks() {
-    return new Statistic({
-      name: 'Clicks',
-      description: 'Total clicks',
-      value: this.owner.level_statistics.map(stat => stat.clicks.value).reduce((a, b) => a + b, 0),
-    })
+    return new ClicksStatistic(
+      this.owner.level_statistics.map(stat => stat.clicks.value).reduce((a, b) => a + b, 0)
+    )
   }
 
   get misclicks() {
-    return new Statistic({
-      name: 'Misclicks',
-      description: 'Total misclicks',
-      value: this.owner.level_statistics.map(stat => stat.misclicks.value).reduce((a, b) => a + b, 0),
-      advanced: true
-    })
+    return new MisclicksStatistic(
+      this.owner.level_statistics.map(stat => stat.misclicks.value).reduce((a, b) => a + b, 0)
+    )
   }
 
   get thieves_shooed() {
-    return new Statistic({
-      name: 'Thieves shooed',
-      description: 'Total thieves shooed',
-      value: this.owner.level_statistics.map(stat => stat.thieves_shooed.value).reduce((a, b) => a + b, 0),
-      advanced: true
-    })
+    return new ThievesShooedStatistic(
+      this.owner.level_statistics.map(stat => stat.thieves_shooed.value).reduce((a, b) => a + b, 0)
+    )
   }
 
   get level() {
@@ -135,32 +147,27 @@ export default class GameStatistics {
   }
 
   get score() {
+    const score = Math.round(
+      this.level.value * 1000
+      - this.misclicks.value * 100
+      - this.time_taken.value / 1000
+      * (1 + this.owner.difficulty_level * this.owner.settings.difficulty_step)
+    );
     return new Statistic({
-      name: 'Score',
+      name: 'Total score',
       description: 'Points scored',
-      value: this.level.value * 1000 - this.misclicks.value * 100 - this.time_taken.value / 1000,
-    });
-  }
-
-  get advanced_score() {
-    const score = this.level.value * 1000 - this.misclicks.value * 100 - this.time_taken.value / 1000 * (1 + this.owner.difficulty_level * this.owner.settings.difficulty_step);
-    return new Statistic({
-      name: 'Weighted score',
-      description: 'Points scored adjusted for game difficulty',
-      value: score,
-      advanced: true
+      value: score
     })
   }
 
-  get all() {
+  get all(): GameStatisticsSummary {
     return {
       time_taken: this.time_taken,
       clicks: this.clicks,
       misclicks: this.misclicks,
       thieves_shooed: this.thieves_shooed,
       level: this.level,
-      score: this.score,
-      advanced_score: this.advanced_score
+      score: this.score
     }
   }
 }
