@@ -2,6 +2,8 @@
 import {useDefaultStore} from "@/stores/default";
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
+import yes_img from '../../public/images/eg_left_eye.jpg';
+import no_img from '../../public/images/eg_left_eye_no.jpg';
 
 const {currentPage, detailsOpen, consentSelected} = storeToRefs(useDefaultStore())
 const {send_data_consent} = storeToRefs(useSettingsStore())
@@ -48,10 +50,10 @@ const process_click = () => {
                     color="primary"
                     variant="tonal"
                     height="200"
-                    @click="() => {select(true); process_click()}"
+                    @click="() => {select!(true); process_click()}"
                   >
                     <v-img
-                      src="images/eg_left_eye.jpg"
+                      :src="yes_img"
                       height="80%"
                     />
                     <p class="text-center text-body-2 text-black">
@@ -68,10 +70,10 @@ const process_click = () => {
                     :class="['mx-auto', 'pa-2', selectedClass]"
                     height="200"
                     variant="tonal"
-                    @click="() => {select(true); process_click()}"
+                    @click="() => {select!(true); process_click()}"
                   >
                     <v-img
-                      src="images/eg_left_eye_no.jpg"
+                      :src="no_img"
                       height="80%"
                     />
                     <p class="text-center text-body-2">

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { settings as _settings, adult_settings, child_settings, Settings } from "@/assets/game_src/utils/settings";
 
 export const useSettingsStore = defineStore('game', {
-  state: () => ({..._settings, send_data_consent: undefined}),
+  state: () => ({..._settings, send_data_consent: undefined as boolean | undefined}),
   getters: {
     to_raw: (state: Settings) => ({
       send_data_consent: state.send_data_consent,

@@ -2,6 +2,8 @@
 import {useDefaultStore} from "@/stores/default";
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
+import child_img from '../../public/images/potato_04.png';
+import adult_img from '../../public/images/potato_03.png';
 
 const {currentPage, difficultySelected, settingsOpen} = storeToRefs(useDefaultStore())
 const {load_defaults} = useSettingsStore()
@@ -43,10 +45,10 @@ const process_click = (value: "adult"|"child") => {
                     color="primary"
                     variant="tonal"
                     height="200"
-                    @click="() => {select(true); process_click('child')}"
+                    @click="() => {select!(true); process_click('child')}"
                   >
                     <v-img
-                      src="images/potato_04.png"
+                      :src="child_img"
                       height="80%"
                     ></v-img>
                     <v-card-title class="text-center text-black">
@@ -64,10 +66,10 @@ const process_click = (value: "adult"|"child") => {
                     color="primary"
                     height="200"
                     variant="tonal"
-                    @click="() => {select(true); process_click('adult')}"
+                    @click="() => {select!(true); process_click('adult')}"
                   >
                     <v-img
-                      src="images/potato_03.png"
+                      :src="adult_img"
                       height="80%"
                     ></v-img>
                     <v-card-title class="text-center text-black">
@@ -81,7 +83,7 @@ const process_click = (value: "adult"|"child") => {
         </v-item-group>
         <v-card-actions>
           <v-btn
-            @click="() => {settingsOpen = true; difficultySelected = true; currentPage++}"
+            @click="settingsOpen = true"
           >
             Customise settings
           </v-btn>

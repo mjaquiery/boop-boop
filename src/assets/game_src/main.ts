@@ -154,14 +154,15 @@ export default class Game extends Engine {
     }
   }
 
-  get UI_overlay(): keyof UI_overlays|null {
+  get UI_overlay(): keyof typeof UI_overlays|null {
     const classes = document.getElementById('excalibur-ui')!.classList;
     if (!classes || !classes.contains('enabled'))
       return null;
-    return Object.values(UI_overlays).find((overlay) => classes.contains(overlay));
+    return Object.values(UI_overlays)
+      .find((overlay) => classes.contains(overlay)) as keyof typeof UI_overlays|null;
   }
 
-  set UI_overlay(overlay: keyof UI_overlays|null) {
+  set UI_overlay(overlay: string|null) {
     const classes = document.getElementById('excalibur-ui')!.classList
     if (!classes) throw new Error("Failed to get excalibur-ui element");
     this.update_wrapper()
@@ -202,7 +203,7 @@ export default class Game extends Engine {
     } as Settings;
   }
 
-  _getScore(key: keyof local_storage_keys) {
+  _getScore(key: string) {
     const score = localStorage.getItem(key);
     if (score === null) return null;
     try {
@@ -215,7 +216,7 @@ export default class Game extends Engine {
     }
   }
 
-  get last_game_score() {
+  get last_game_score(): GameStatisticsSummary|null {
     return this._getScore(local_storage_keys.LAST_GAME_SCORE);
   }
 
@@ -223,7 +224,7 @@ export default class Game extends Engine {
     localStorage.setItem('last_game_score', JSON.stringify(last_game_score));
   }
 
-  get highscore() {
+  get highscore(): GameStatisticsSummary|null {
     return this._getScore(local_storage_keys.HIGHSCORE);
   }
 

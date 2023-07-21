@@ -30,6 +30,7 @@ import {ImageResources, random_resource_key_by_type, SoundResources} from "../ut
 import Game, {level_names} from "../main";
 import MusicManager from "../utils/MusicManager";
 import {LevelStatistics} from "@/assets/game_src/utils/Statistics";
+import {Settings} from "@/assets/game_src/utils/settings";
 
 type Face = {
   eyes: string;
