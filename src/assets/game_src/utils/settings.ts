@@ -36,7 +36,7 @@ export const adult_settings: Settings = {
 
 export const child_settings: Settings = {
   start_level: 0,
-  difficulty_step: 0.5,
+  difficulty_step: 0.05,
   max_components: 10,
   component_spawn_delay_min: 1000,
   component_spawn_delay_variation: 500,

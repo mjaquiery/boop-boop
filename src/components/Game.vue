@@ -112,6 +112,22 @@
       </v-sheet>
     </div>
   </div>
+  <v-card-actions>
+    <v-btn
+      @click="settingsOpen = true"
+      variant="plain"
+    >Change settings</v-btn>
+    <v-spacer />
+    <v-btn
+      @click="detailsOpen = true"
+      variant="plain"
+    >Details</v-btn>
+    <v-spacer />
+    <v-btn
+      @click="currentPage = pages.WELCOME"
+      variant="plain"
+    >Back to the intro</v-btn>
+  </v-card-actions>
 </template>
 
 <script setup lang="ts">
@@ -120,7 +136,10 @@ import {computed, markRaw, onMounted, ref, watch} from 'vue'
 import {useSettingsStore} from "@/stores/settings";
 import {DevTool} from "@excaliburjs/dev-tools";
 import {GameStatisticsSummary, Statistic} from "@/assets/game_src/utils/Statistics";
+import {pages, useDefaultStore} from "@/stores/default";
+import {storeToRefs} from "pinia";
 const {to_raw} = useSettingsStore()
+const {currentPage, settingsOpen, detailsOpen} = storeToRefs(useDefaultStore())
 
 const ui = ref<HTMLDivElement|null>(null)
 const advanced_stats = ref(false);
@@ -166,6 +185,11 @@ const get_name_with_unit: (stat: Statistic) => string = (stat: Statistic) => {
 
 <style>
 div {position: relative;}
+
+#GameCanvas {
+  cursor: pointer;
+}
+
 #excalibur-play-root {
   position: absolute;
   top: unset !important;

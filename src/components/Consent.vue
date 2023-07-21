@@ -1,54 +1,105 @@
 <script setup lang="ts">
-import ConsentSwitch from "@/components/ConsentSwitch.vue";
+import {useDefaultStore} from "@/stores/default";
+import {storeToRefs} from "pinia";
+import {useSettingsStore} from "@/stores/settings";
+
+const {currentPage, detailsOpen, consentSelected} = storeToRefs(useDefaultStore())
+const {send_data_consent} = storeToRefs(useSettingsStore())
+
+const process_click = () => {
+  consentSelected.value = true
+  currentPage.value++
+}
 </script>
 
 <template>
-  <v-sheet color="primary">
-    <h1>Welcome to the Boop-Boop Game</h1>
-    <p>
-      This game is brought to you by a team of psychologists, who are trying to understand
-      how to work out where people are looking on a screen using images from a webcam.
-    </p>
-    <p>
-      To find this out, we need lots and lots of webcam pictures of people looking at screens,
-      and we need to know where they are looking on the screen. This game is designed to
-      collect this data.
-    </p>
-    <p>
-      In this game you will be asked to make your potato face match the target face.
-      The bits you need to add to the face will flow down the sides of the screen.
-      <strong>Every time you click a piece, we will take a picture with your webcam and store it,
-        along with where you clicked on the screen.</strong>
-      We will use the pictures to train our computer to work out where people are looking on the screen.
-      We won't sell or give your pictures to anyone else.
-    </p>
-    <p>
-      Your pictures will be sent to our server as full webcam images.
-      We then take low-resolution copies of the eyes in the image, and delete the original.
-      Your pictures will look like this when they are stored:
-      <v-container>
-        <v-row no-gutters align="center">
-          <v-col
-            v-for="src in ['eg_left_eye.jpg', 'eg_right_eye.jpg']"
-            :key="src"
+  <v-timeline
+    truncate-line="end"
+    side="end"
+    class="w-100"
+  >
+    <v-timeline-item
+      size="x-large"
+      :icon-color="consentSelected? 'secondary' : 'primary'"
+      icon="mdi-camera-outline"
+      :dot-color="consentSelected? 'primary' : 'secondary'"
+    >
+      <v-card class="pa-4" variant="text">
+        <v-card-title>Your pictures</v-card-title>
+        <p class="text-body-1">
+          We would like to keep webcam pictures of your eyes whenever you click a piece in the game.
+        </p>
+        <p class="text-body-1">
+          We combine these with information about where you're clicking to train a computer to work out
+          where people are looking on the screen.
+        </p>
+        <p class="text-body-1 mt-4">
+          Please <strong>click the button</strong> that best describes your wishes.
+        </p>
+        <v-item-group selected-class="bg-primary" class="mb-4" v-model="send_data_consent">
+          <v-container>
+            <v-row>
+              <v-col
+                cols="6"
+              >
+                <v-item :value="true" v-slot="{ selectedClass, select }">
+                  <v-card
+                    :class="['mx-auto', 'pa-2', selectedClass]"
+                    color="primary"
+                    variant="tonal"
+                    height="200"
+                    @click="() => {select(true); process_click()}"
+                  >
+                    <v-img
+                      src="images/eg_left_eye.jpg"
+                      height="80%"
+                    />
+                    <p class="text-center text-body-2 text-black">
+                      Yes, keep my pictures like this
+                    </p>
+                  </v-card>
+                </v-item>
+              </v-col>
+              <v-col
+                cols="6"
+              >
+                <v-item :value="false" v-slot="{ selectedClass, select }">
+                  <v-card
+                    :class="['mx-auto', 'pa-2', selectedClass]"
+                    height="200"
+                    variant="tonal"
+                    @click="() => {select(true); process_click()}"
+                  >
+                    <v-img
+                      src="images/eg_left_eye_no.jpg"
+                      height="80%"
+                    />
+                    <p class="text-center text-body-2">
+                      No, please don't send my pictures
+                    </p>
+                  </v-card>
+                </v-item>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-item-group>
+        <p class="text-body-1">You can still play the game whichever option you choose.</p>
+        <v-card-actions>
+          <v-btn @click="detailsOpen = true">
+            More details
+          </v-btn>
+          <v-spacer />
+          <v-btn
+            @click="currentPage--"
+            variant="tonal"
           >
-            <img
-              :src="`/images/${src}`"
-              alt="Example of the eyes that will be stored"
-            />
-          </v-col>
-        </v-row>
-      </v-container>
-    </p>
-    <p>
-      If you don't want to send any pictures, you can still play the game.
-    </p>
-    <v-sheet color="secondary">
-      <ConsentSwitch />
-    </v-sheet>
-  </v-sheet>
+            Go back
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-timeline-item>
+  </v-timeline>
 </template>
 
 <style scoped>
-
 </style>

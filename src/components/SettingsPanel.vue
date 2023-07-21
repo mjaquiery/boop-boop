@@ -4,9 +4,11 @@ import {useSettingsStore} from "@/stores/settings";
 import {adult_settings, child_settings, Settings} from "@/assets/game_src/utils/settings";
 import {computed, ref, watch} from "vue";
 import ConsentSwitch from "@/components/ConsentSwitch.vue";
-import {useDefaultStore} from "@/stores/default";
+import {pages, useDefaultStore} from "@/stores/default";
 
-const {settingsOpen} = storeToRefs(useDefaultStore())
+const {currentPage, detailsOpen, settingsOpen, difficultySelected} = storeToRefs(useDefaultStore())
+
+const emits = defineEmits(['changed'])
 
 const {
   send_data_consent,
@@ -38,10 +40,16 @@ const defaults = computed({
       if (!Object.keys(adult_settings).includes(key) || adult_settings[key as keyof Settings] !== value)
         adult = false;
     }
-    if (adult)
+    if (adult) {
+      difficultySelected.value = "adult"
+      currentPage.value = Math.max(pages.CONSENT, currentPage.value)
       return "adult";
-    if (child)
+    }
+    if (child) {
+      difficultySelected.value = "child"
+      currentPage.value = Math.max(pages.CONSENT, currentPage.value)
       return "child";
+    }
     return "";
   },
   set: function(value: string) {
@@ -86,124 +94,177 @@ const all_settings = computed(() => ({
   needy_potato_delay_variation: needy_potato_delay_variation.value,
   needy_potato_duration: needy_potato_duration.value
 }))
-watch(all_settings, () => refresh_defaults.value++)
+watch(all_settings, () => {
+  emits('changed')
+  refresh_defaults.value++
+})
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 </script>
 
 <template>
-  <h1>Settings</h1>
-  <ConsentSwitch />
-  <v-btn-toggle v-model="defaults">
-    <v-btn value="child">Child settings</v-btn>
+  <v-card class="mx-auto my-4 px-2" max-width="600">
+    <v-card-title>Settings</v-card-title>
 
-    <v-btn value="adult">Adult settings</v-btn>
-  </v-btn-toggle>
+    <p class="text-body-2 mt-2">
+      We would like your consent to save pictures from your webcam.
+      We combine these with information about where you're clicking to train a computer to work out
+      where people are looking on the screen.
+    </p>
+    <ConsentSwitch />
 
-  <v-divider />
+    <p class="text-body-2">
+      You can use these buttons to load default settings for adults or children.
+    </p>
+    <v-btn-toggle
+      v-model="defaults"
+      class="w-100"
+      variant="outlined"
+      color="primary"
+    >
+      <v-btn value="child" class="w-50">Child</v-btn>
+      <v-btn value="adult" class="w-50">Adult</v-btn>
+    </v-btn-toggle>
 
-  <v-btn @click="custom_settings = !custom_settings" variant="text">
-    <v-icon v-if="custom_settings">mdi-chevron-down</v-icon>
-    <v-icon v-else>mdi-chevron-right</v-icon>
-    <h2>Customise settings</h2>
-  </v-btn>
+    <v-expand-transition>
+      <v-list v-if="custom_settings">
+        <v-list-subheader :inset="true">About Pieces</v-list-subheader>
+        <v-list-item>
+          <v-list-item-title>
+            At most <v-chip :label="true">{{ max_components }}</v-chip> Pieces onscreen at once
+          </v-list-item-title>
+          <v-slider
+            min="0"
+            max="50"
+            step="1"
+            v-model="max_components"
+            @update:model-value="value => max_components =  clamp(value, 1, 50)"
+          />
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-title>
+            Pieces appear every
+            <v-chip :label="true">{{ (component_spawn_delay[0] / 1000).toFixed(2) }}</v-chip>
+            to <v-chip :label="true">{{ (component_spawn_delay[1] / 1000).toFixed(2) }}</v-chip>
+            seconds
+          </v-list-item-title>
+          <v-range-slider
+            min="0"
+            max="10000"
+            step="100"
+            v-model="component_spawn_delay"
+          />
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-title>
+            Pieces last for
+            <v-chip :label="true">{{ (component_lifetime / 1000).toFixed(2) }}</v-chip>
+            seconds
+          </v-list-item-title>
+          <v-slider
+            min="0"
+            max="10000"
+            step="100"
+            v-model="component_lifetime"
+            @update:model-value="value => component_lifetime =  clamp(value, 100, 10000)"
+          />
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-title>
+            Pieces are
+            <v-chip :label="true">{{ (target_frequency * 100).toFixed(0) }}%</v-chip>
+            likely to be useful
+          </v-list-item-title>
+          <v-slider
+            min="0"
+            max="1"
+            step="0.1"
+            v-model="target_frequency"
+            @update:model-value="value => target_frequency =  clamp(value, 0.1, 1)"
+          />
+        </v-list-item>
+        <v-list-subheader :inset="true">About Potato Thieves</v-list-subheader>
+        <v-list-item>
+          <v-list-item-title>
+            Potato Thieves appear every
+            <v-chip :label="true">{{ (needy_potato_delay[0] / 1000).toFixed(2) }}</v-chip>
+            to <v-chip :label="true">{{ (needy_potato_delay[1] / 1000).toFixed(2) }}</v-chip>
+            seconds
+          </v-list-item-title>
+          <v-range-slider
+            min="0"
+            max="10000"
+            step="100"
+            v-model="needy_potato_delay"
+            @update:model-value="value => needy_potato_delay =  value.map(v => clamp(v, 200, 10000))"
+          />
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-title>
+            Potato Thieves steal the potato after
+            <v-chip :label="true">{{ (needy_potato_duration / 1000).toFixed(2) }}</v-chip>
+            seconds
+          </v-list-item-title>
+          <v-slider
+            min="0"
+            max="10000"
+            step="100"
+            v-model="needy_potato_duration"
+            @update:model-value="value => needy_potato_duration =  clamp(value, 200, 10000)"
+          />
+        </v-list-item>
+        <v-list-subheader :inset="true">About the Difficulty</v-list-subheader>
+        <v-list-item>
+          <v-list-item-title>
+            The difficulty increases by about
+            <v-chip :label="true">{{ (difficulty_step * 100).toFixed(0) }}%</v-chip>
+            each level
+          </v-list-item-title>
+          <v-slider
+            min="0"
+            max="0.25"
+            step="0.01"
+            v-model="difficulty_step"
+            @update:model-value="value => difficulty_step =  clamp(value, 0.01, 0.25)"
+          />
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-title>
+            You start at level
+            <v-chip :label="true">{{ (start_level || 0) + 1 }}</v-chip>
+          </v-list-item-title>
+          <v-slider
+            min="0"
+            max="9"
+            step="1"
+            v-model="start_level"
+            @update:model-value="value => start_level =  clamp(value, 0, 9)"
+          />
+        </v-list-item>
+      </v-list>
+    </v-expand-transition>
 
-  <v-sheet v-if="custom_settings" class="w-100 mb-16">
-    <h3>Component settings</h3>
-    <div class="text-caption">Maximum number of pieces onscreen at once</div>
-    <v-slider
-      min="0"
-      max="50"
-      step="1"
-      thumb-label="always"
-      v-model="max_components"
-      @update:model-value="value => max_components =  clamp(value, 1, 50)"
-    />
-    <div class="text-caption">How often do pieces appear?</div>
-    <v-range-slider
-      min="0"
-      max="10000"
-      step="100"
-      thumb-label="always"
-      v-model="component_spawn_delay"
-    />
-    <div class="text-caption">How long do pieces last?</div>
-    <v-slider
-      min="0"
-      max="10000"
-      step="100"
-      thumb-label="always"
-      v-model="component_lifetime"
-      @update:model-value="value => component_lifetime =  clamp(value, 100, 10000)"
-      suffix="ms"
-    />
-    <div class="text-caption">How likely are pieces to be useful?</div>
-    <v-slider
-      min="0"
-      max="1"
-      step="0.1"
-      thumb-label="always"
-      v-model="target_frequency"
-      @update:model-value="value => target_frequency =  clamp(value, 0.1, 1)"
-    />
-    <h3>Needy Potato settings</h3>
-    <div class="text-caption">How often do pieces fall off?</div>
-    <v-range-slider
-      min="0"
-      max="10000"
-      step="100"
-      thumb-label="always"
-      v-model="needy_potato_delay"
-      @update:model-value="value => needy_potato_delay =  value.map(v => clamp(v, 200, 10000))"
-    />
-    <div class="text-caption">How long do you have to stop pieces falling off?</div>
-    <v-slider
-      min="0"
-      max="10000"
-      step="100"
-      thumb-label="always"
-      v-model="needy_potato_duration"
-      @update:model-value="value => needy_potato_duration =  clamp(value, 200, 10000)"
-      suffix="ms"
-    />
-    <h3>Difficulty settings</h3>
-    <div class="text-caption">How much does the difficulty increase each level?</div>
-    <v-slider
-      min="0"
-      max="0.25"
-      step="0.01"
-      thumb-label="always"
-      v-model="difficulty_step"
-      @update:model-value="value => difficulty_step =  clamp(value, 0.01, 0.25)"
-    />
-    <div class="text-caption">What level do you start at?</div>
-    <v-slider
-      min="0"
-      max="100"
-      step="1"
-      thumb-label="always"
-      v-model="start_level"
-      @update:model-value="value => start_level =  clamp(value, 0, 100)"
-    />
-  </v-sheet>
-  <v-btn
-    @click="() => settingsOpen = false"
-    variant="tonal"
-    prepend-icon="mdi-check"
-    :block="true"
-    class="close-settings"
-  >Close</v-btn>
+    <v-card-actions>
+      <v-btn @click="custom_settings = !custom_settings">
+        {{ custom_settings? 'Hide advanced' : 'Show more' }} settings
+      </v-btn>
+      <v-spacer />
+      <v-btn @click="detailsOpen = true">
+        Full details
+      </v-btn>
+      <v-spacer />
+      <v-btn
+        @click="() => settingsOpen = false"
+        variant="tonal"
+        class="close-settings"
+        color="success"
+      >Close</v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <style scoped>
 .v-slider {
-  width: 90%;
-}
-.v-divider {
-  margin: 1rem;
-}
-.close-settings {
-  position: absolute;
-  bottom: 1rem;
-  width: 100%;
+  padding-left: 1em;
+  padding-right: 1em;
 }
 </style>

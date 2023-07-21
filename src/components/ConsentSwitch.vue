@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
+import {pages, useDefaultStore} from "@/stores/default";
 
 const {send_data_consent} = storeToRefs(useSettingsStore())
+const {currentPage} = storeToRefs(useDefaultStore())
+
+const update = (value: boolean) => {
+  send_data_consent.value = value
+  currentPage.value = pages.GAME
+}
 </script>
 
 <template>
@@ -10,7 +17,8 @@ const {send_data_consent} = storeToRefs(useSettingsStore())
     class="d-flex justify-center"
     :inset="true"
     :indeterminate="send_data_consent === undefined"
-    v-model="send_data_consent"
+    v-bind="send_data_consent"
+    @change="update"
     :color="send_data_consent? 'success' : ''"
     label="I consent to my pictures being stored"
   />
