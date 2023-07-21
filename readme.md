@@ -1,9 +1,44 @@
-# Excalibur TypeScript & Vite template
+# default
 
-## Getting Started
+## Project setup
 
-1. [Generate a repository](https://github.com/excaliburjs/template-ts-vite/generate) from this template
-2. Modify the `package.json` with your own details
-3. Run `npm install` to install dependencies
-4. Run `npm run dev` to start the Vite server!
-5. Have fun!
+```
+# yarn
+yarn
+
+# npm
+npm install
+
+# pnpm
+pnpm install
+```
+
+### Compiles and hot-reloads for development
+
+```
+# yarn
+yarn dev
+
+# npm
+npm run dev
+
+# pnpm
+pnpm dev
+```
+
+### Compiles and minifies for production
+
+```
+# yarn
+yarn build
+
+# npm
+npm run build
+
+# pnpm
+pnpm build
+```
+
+### Customize configuration
+
+See [Configuration Reference](https://vitejs.dev/config/).
