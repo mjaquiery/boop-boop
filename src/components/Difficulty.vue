@@ -2,8 +2,8 @@
 import {useDefaultStore} from "@/stores/default";
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
-import child_img from '../../public/images/potato_04.png';
-import adult_img from '../../public/images/potato_03.png';
+import child_img from '@/assets/potato_04.png';
+import adult_img from '@/assets/potato_03.png';
 
 const {currentPage, difficultySelected, settingsOpen} = storeToRefs(useDefaultStore())
 const {load_defaults} = useSettingsStore()

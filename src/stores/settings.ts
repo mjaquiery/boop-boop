@@ -1,5 +1,11 @@
 import { defineStore } from 'pinia'
-import { settings as _settings, adult_settings, child_settings, Settings } from "@/assets/game_src/utils/settings";
+import {
+  settings as _settings,
+  adult_settings,
+  child_settings,
+  free_play_settings,
+  Settings
+} from "@/assets/game_src/utils/settings";
 
 export const useSettingsStore = defineStore('game', {
   state: () => ({..._settings, send_data_consent: undefined as boolean | undefined}),
@@ -28,11 +34,13 @@ export const useSettingsStore = defineStore('game', {
         }
       }
     },
-    load_defaults: function (type: "adult" | "child" = "adult") {
+    load_defaults: function (type: "adult" | "child" | "free_play" = "adult") {
       if (type === "adult")
         this._update_from_object(adult_settings);
-      else
+      else if (type === "child")
         this._update_from_object(child_settings);
+      else if (type === "free_play")
+        this._update_from_object(free_play_settings);
     }
   },
 })

@@ -2,8 +2,8 @@
 import {useDefaultStore} from "@/stores/default";
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
-import yes_img from '../../public/images/eg_left_eye.jpg';
-import no_img from '../../public/images/eg_left_eye_no.jpg';
+import yes_img from '@/assets/eg_left_eye.jpg';
+import no_img from '@/assets/eg_left_eye_no.jpg';
 
 const {currentPage, detailsOpen, consentSelected} = storeToRefs(useDefaultStore())
 const {send_data_consent} = storeToRefs(useSettingsStore())

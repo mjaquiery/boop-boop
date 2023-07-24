@@ -22,7 +22,7 @@
                 <th class="text-left">
 
                 </th>
-                <th class="text-right" :class="last_score!.score.value > highscore!.score.value? 'high' : ''">
+                <th class="text-right" v-if="last_score" :class="!highscore || (last_score!.score.value > highscore!.score.value)? 'high' : ''">
                   Last game
                 </th>
                 <th class="text-right" v-if="highscore">
@@ -38,17 +38,17 @@
               >
                 <td
                   class="text-left"
-                  :class="stat.value > get_highscore(stat)!.value? 'high' : ''"
+                  :class="!highscore || (stat.value > get_highscore(stat)!.value)? 'high' : ''"
                 >
-                  {{ get_name_with_unit(stat) }}
+                  {{ get_name_with_unit(stat as Statistic) }}
                 </td>
                 <td
                   class="text-right"
-                  :class="stat.value > get_highscore(stat)!.value? 'high' : ''"
+                  :class="!highscore || (stat.value > get_highscore(stat)!.value)? 'high' : ''"
                 >
-                  {{ get_display_value(stat) }}
+                  {{ get_display_value(stat as Statistic) }}
                 </td>
-                <td class="text-right"  v-if="highscore">{{ get_display_value(get_highscore(stat)) }}</td>
+                <td class="text-right"  v-if="highscore">{{ get_display_value(get_highscore(stat as Statistic)) }}</td>
               </tr>
               </tbody>
             </v-table>
