@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
-import {adult_settings, child_settings, Settings} from "@/assets/game_src/utils/settings";
+import {adult_settings, child_settings, free_play_settings, Settings} from "@/assets/game_src/utils/settings";
 import {computed, ref, watch} from "vue";
 import ConsentSwitch from "@/components/ConsentSwitch.vue";
 import {pages, useDefaultStore} from "@/stores/default";
@@ -19,41 +19,44 @@ const {
   component_spawn_delay_variation,
   component_lifetime,
   target_frequency,
+  needy_potato_enabled,
   needy_potato_delay_min,
   needy_potato_delay_variation,
   needy_potato_duration
 } = storeToRefs(useSettingsStore())
 const {load_defaults} = useSettingsStore()
 
+const _setting_sets = {
+  child: child_settings,
+  adult: adult_settings,
+  free_play: free_play_settings
+}
+
 const custom_settings = ref(false);
 const refresh_defaults = ref(0)
 const defaults = computed({
   get: () => {
     refresh_defaults.value;
-    let child = true;
-    let adult = true;
-    for (const [key, value] of Object.entries(all_settings.value)) {
-      if (key === "send_data_consent")
-        continue;
-      if (!Object.keys(child_settings).includes(key) || child_settings[key as keyof Settings] !== value)
-        child = false;
-      if (!Object.keys(adult_settings).includes(key) || adult_settings[key as keyof Settings] !== value)
-        adult = false;
-    }
-    if (adult) {
-      difficultySelected.value = "adult"
-      currentPage.value = Math.max(pages.CONSENT, currentPage.value)
-      return "adult";
-    }
-    if (child) {
-      difficultySelected.value = "child"
-      currentPage.value = Math.max(pages.CONSENT, currentPage.value)
-      return "child";
+    for (const [preset, settings] of Object.entries(_setting_sets)) {
+      let match = true;
+      for (const [key, value] of Object.entries(all_settings.value)) {
+        if (key === "send_data_consent")
+          continue;
+        if (!Object.keys(settings).includes(key) || settings[key as keyof Settings] !== value) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        difficultySelected.value = preset
+        currentPage.value = Math.max(pages.CONSENT, currentPage.value)
+        return preset;
+      }
     }
     return "";
   },
   set: function(value: string) {
-    if (value === "child" || value === "adult")
+    if (value === "child" || value === "adult" || value === "free_play")
       load_defaults(value)
   }
 })
@@ -90,6 +93,7 @@ const all_settings = computed(() => ({
   component_spawn_delay_variation: component_spawn_delay_variation.value,
   component_lifetime: component_lifetime.value,
   target_frequency: target_frequency.value,
+  needy_potato_enabled: needy_potato_enabled.value,
   needy_potato_delay_min: needy_potato_delay_min.value,
   needy_potato_delay_variation: needy_potato_delay_variation.value,
   needy_potato_duration: needy_potato_duration.value
@@ -117,15 +121,16 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
     </p>
     <v-btn-toggle
       v-model="defaults"
-      class="w-100"
+      class="w-100 presets"
       variant="outlined"
       color="primary"
     >
-      <v-btn value="child" class="w-50">Child</v-btn>
-      <v-btn value="adult" class="w-50">Adult</v-btn>
+      <v-btn value="free_play" class="w-33">Free play</v-btn>
+      <v-btn value="child" class="w-33">Child</v-btn>
+      <v-btn value="adult" class="w-33">Adult</v-btn>
     </v-btn-toggle>
 
-    <v-expand-transition>
+    <v-expand-transition class="advanced_settings my-4">
       <v-list v-if="custom_settings">
         <v-list-subheader :inset="true">About Pieces</v-list-subheader>
         <v-list-item>
@@ -185,6 +190,12 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
         <v-list-subheader :inset="true">About Potato Thieves</v-list-subheader>
         <v-list-item>
           <v-list-item-title>
+            Potato Thieves are <v-chip :label="true">{{ needy_potato_enabled? 'allowed' : 'not allowed'}}</v-chip>
+          </v-list-item-title>
+          <v-switch v-model="needy_potato_enabled" />
+        </v-list-item>
+        <v-list-item v-if="needy_potato_enabled">
+          <v-list-item-title>
             Potato Thieves appear every
             <v-chip :label="true">{{ (needy_potato_delay[0] / 1000).toFixed(2) }}</v-chip>
             to <v-chip :label="true">{{ (needy_potato_delay[1] / 1000).toFixed(2) }}</v-chip>
@@ -192,13 +203,13 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
           </v-list-item-title>
           <v-range-slider
             min="0"
-            max="10000"
+            max="120000"
             step="100"
             v-model="needy_potato_delay"
             @update:model-value="value => needy_potato_delay =  value.map(v => clamp(v, 200, 10000))"
           />
         </v-list-item>
-        <v-list-item>
+        <v-list-item v-if="needy_potato_enabled">
           <v-list-item-title>
             Potato Thieves steal the potato after
             <v-chip :label="true">{{ (needy_potato_duration / 1000).toFixed(2) }}</v-chip>
@@ -206,7 +217,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
           </v-list-item-title>
           <v-slider
             min="0"
-            max="10000"
+            max="30000"
             step="100"
             v-model="needy_potato_duration"
             @update:model-value="value => needy_potato_duration =  clamp(value, 200, 10000)"
@@ -263,7 +274,13 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 </template>
 
 <style scoped>
-.v-slider {
+.advanced_settings {
+  max-height: 50vh !important;
+}
+.presets {
+  height: 4em !important;
+}
+.v-slider, .v-switch {
   padding-left: 1em;
   padding-right: 1em;
 }

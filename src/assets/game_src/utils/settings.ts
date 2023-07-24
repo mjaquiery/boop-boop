@@ -7,6 +7,7 @@ type ComponentsSettings = {
 }
 
 type NeedyPotatoSettings = {
+  needy_potato_enabled: boolean;  // Whether needy potatoes are enabled
   needy_potato_delay_min: number;  // Minimum delay between needy potato spawns
   needy_potato_delay_variation: number;  // Maximum variation in needy potato spawn delay
   needy_potato_duration: number;  // How long needy potatoes allow for interaction
@@ -29,6 +30,7 @@ export const adult_settings: Settings = {
   component_lifetime: 2000,
   target_frequency: 1 / 5,
   music_change_delay: 60000,
+  needy_potato_enabled: true,
   needy_potato_delay_min: 5000,
   needy_potato_delay_variation: 2500,
   needy_potato_duration: 5000,
@@ -40,12 +42,28 @@ export const child_settings: Settings = {
   max_components: 10,
   component_spawn_delay_min: 1000,
   component_spawn_delay_variation: 500,
-  component_lifetime: 4000,
+  component_lifetime: 5000,
   target_frequency: 1 / 3,
   music_change_delay: 60000,
-  needy_potato_delay_min: 5000,
-  needy_potato_delay_variation: 2500,
-  needy_potato_duration: 5000,
+  needy_potato_enabled: true,
+  needy_potato_delay_min: 10000,
+  needy_potato_delay_variation: 5000,
+  needy_potato_duration: 6000,
+}
+
+export const free_play_settings: Settings = {
+  start_level: 0,
+  difficulty_step: 0.05,
+  max_components: 10,
+  component_spawn_delay_min: 1000,
+  component_spawn_delay_variation: 500,
+  component_lifetime: 5000,
+  target_frequency: 1 / 3,
+  music_change_delay: 60000,
+  needy_potato_enabled: false,
+  needy_potato_delay_min: 10000,
+  needy_potato_delay_variation: 5000,
+  needy_potato_duration: 6000,
 }
 
 export const settings: Settings = adult_settings;
