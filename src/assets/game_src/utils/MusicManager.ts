@@ -5,7 +5,8 @@ export default class MusicManager {
   current_track: number;
   will_change_track: boolean;
   iteration: number = 0;
-  callbacks: boolean[] = [];
+  sequential_play_count: number = 0;
+  // callbacks: boolean[] = [];
 
   constructor(tracks: Sound[]) {
     this.tracks = tracks;
@@ -22,17 +23,22 @@ export default class MusicManager {
     return next_track;
   }
 
+  get branchToNewTrack() {
+    const track_change_chance = 0.1;
+    return Math.random() < (this.sequential_play_count * track_change_chance);
+  }
+
   play() {
     this.stop();
-    if(this.will_change_track) {
+    if(this.will_change_track || this.branchToNewTrack) {
       this.current_track = this.get_random_track();
       console.log(`Changing track to ${this.current_track}`);
       this.will_change_track = false;
-    }
+      this.sequential_play_count = 0;
+    } else
+      this.sequential_play_count++;
     this.tracks[this.current_track].play().then(() => {
-      if (this.callbacks[this.iteration]) {
-        this.play();
-      }
+      this.play();
     });
     this.iteration++;
   }

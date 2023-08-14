@@ -34,7 +34,21 @@ export const random_resource_key_by_type: (type: string) => string = (type: stri
 }
 export const random_resource_by_type: (type: string) => ImageSource = (type: string) => ImageResources[random_resource_key_by_type(type)]
 
+
+const background_music: {[key: string]: Sound} = {}
+const background_music_count = 32
+const background_music_ids: number[] = []
+for (let i = 1; i <= background_music_count; i++)
+  background_music_ids.push(i);
+background_music_ids.forEach(i => {
+  if ([4, 5, 23, 27, 28, 29, 30, 31].includes(i))
+    return;
+  const name = `bgm_${i}`;
+  background_music[name] = new Sound(`${import.meta.env.BASE_URL}sounds/under-restricted-license/${name}.wav`);
+});
+
 const SoundResources = {
+  ...background_music,
   annoyed_01: new Sound(`${import.meta.env.BASE_URL}sounds/annoyed_01.mp3`),
   annoyed_02: new Sound(`${import.meta.env.BASE_URL}sounds/annoyed_02.mp3`),
   annoyed_03: new Sound(`${import.meta.env.BASE_URL}sounds/annoyed_03.wav`),
@@ -75,10 +89,7 @@ const SoundResources = {
   mumble_14: new Sound(`${import.meta.env.BASE_URL}sounds/mumble_14.wav`),
   mumble_15: new Sound(`${import.meta.env.BASE_URL}sounds/mumble_15.wav`),
   mumble_16: new Sound(`${import.meta.env.BASE_URL}sounds/mumble_16.wav`),
-  mumble_17: new Sound(`${import.meta.env.BASE_URL}sounds/mumble_17.mp3`),
-  music_01: new Sound(`${import.meta.env.BASE_URL}sounds/music_01.mp3`),
-  music_02: new Sound(`${import.meta.env.BASE_URL}sounds/music_02.wav`),
-  music_03: new Sound(`${import.meta.env.BASE_URL}sounds/music_03.mp3`),
+  mumble_17: new Sound(`${import.meta.env.BASE_URL}sounds/mumble_17.mp3`)
 }
 
 export { ImageResources, SoundResources };

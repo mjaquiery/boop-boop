@@ -80,7 +80,7 @@ export default class PotatoMatching extends Scene {
     if (!music_manager) {
       const tracks: Sound[] = [];
       Object.keys(SoundResources)
-        .filter(k => k.startsWith('music_'))
+        .filter(k => k.startsWith('bgm_'))
         .forEach(k => tracks.push(SoundResources[k as keyof typeof SoundResources]));
       music_manager = new MusicManager(tracks);
     }
@@ -138,11 +138,6 @@ export default class PotatoMatching extends Scene {
 
     // Set up timers
     this.spawn_timers = {
-      changeMusic: new Timer({
-        fcn: this.changeMusic.bind(this),
-        interval: this.settings.music_change_delay,
-        repeats: true,
-      }),
       spawnComponent: new Timer({
         fcn: this.spawnComponent.bind(this),
         interval: this.settings.component_spawn_delay_min,
@@ -466,11 +461,6 @@ export default class PotatoMatching extends Scene {
       this.add(t);
       t.start();
     });
-  }
-
-  changeMusic() {
-    if (this.complete) return;
-    this.music_manager.will_change_track = true;
   }
 
   spawnThief() {
