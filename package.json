@@ -1,6 +1,6 @@
 {
   "name": "boop-boop",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Clicking game for children and adults build with Excalibur TypeScript",
   "scripts": {
     "dev": "vite",
