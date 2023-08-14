@@ -26,15 +26,15 @@ import Eyes from "../actors/Eyes";
 import Mouth from "../actors/Mouth";
 import Potato from "../actors/Potato";
 import Thief from "../actors/Thief";
-import {ImageResources, random_resource_key_by_type, SoundResources} from "../utils/resources";
+import {EyesImage, ImageSkin, MouthImage, PotatoImage} from "../utils/resources";
 import Game, {level_names} from "../main";
 import MusicManager from "../utils/MusicManager";
 import {LevelStatistics} from "@/assets/game_src/utils/Statistics";
 import {Settings} from "@/assets/game_src/utils/settings";
 
 type Face = {
-  eyes: string;
-  mouth: string;
+  eyes: keyof EyesImage;
+  mouth: keyof MouthImage;
   hair?: string;
   nose?: string;
   ears?: string;
@@ -79,9 +79,8 @@ export default class PotatoMatching extends Scene {
     super();
     if (!music_manager) {
       const tracks: Sound[] = [];
-      Object.keys(SoundResources)
-        .filter(k => k.startsWith('bgm_'))
-        .forEach(k => tracks.push(SoundResources[k as keyof typeof SoundResources]));
+      this.engine.all_resources_by_type<Sound>('background_music')
+        .forEach(track => tracks.push(track));
       music_manager = new MusicManager(tracks);
     }
     this.music_manager = music_manager;
@@ -175,30 +174,33 @@ export default class PotatoMatching extends Scene {
     }
 
     this.target_face = {
-      eyes: random_resource_key_by_type('eyes'),
-      mouth: random_resource_key_by_type('mouth'),
-      hair: Math.random() < .2? random_resource_key_by_type('hair') : undefined,
-      nose: Math.random() < .2? random_resource_key_by_type('nose') : undefined,
-      ears: Math.random() < .2? random_resource_key_by_type('ears') : undefined,
-      glasses: Math.random() < .2? random_resource_key_by_type('glasses') : undefined,
-      mustache: Math.random() < .2? random_resource_key_by_type('mustache') : undefined,
+      eyes: this.engine.random_resource_key_by_type<EyesImage>('eyes'),
+      mouth: this.engine.random_resource_key_by_type<MouthImage>('mouth'),
+      // hair: Math.random() < .2? random_resource_key_by_type('hair') : undefined,
+      // nose: Math.random() < .2? random_resource_key_by_type('nose') : undefined,
+      // ears: Math.random() < .2? random_resource_key_by_type('ears') : undefined,
+      // glasses: Math.random() < .2? random_resource_key_by_type('glasses') : undefined,
+      // mustache: Math.random() < .2? random_resource_key_by_type('mustache') : undefined,
     }
 
     // Sort component keys into buckets
     for (const s of Object.keys(this.target_face)) {
       const k = s as ComponentType;
       const key = this.target_face[k];
-      let resources = Object.keys(ImageResources);
+      let resources = [
+        ...this.engine.all_resource_keys_by_type<EyesImage>('eyes'),
+        ...this.engine.all_resource_keys_by_type<MouthImage>('mouth')
+      ];
       if (key) {
         this.buckets.targets.push(key);
-        resources = resources.filter(k => k !== key)
+        resources = resources.filter(k => (k as string) !== key)
       }
       const matches = resources.filter(k => k.startsWith(s));
       this.buckets.distractors.push(...matches);
     }
 
     // Create the target
-    this.target_potato = new Potato({key: random_resource_key_by_type('potato')});
+    this.target_potato = new Potato({key: this.engine.random_resource_key_by_type<PotatoImage>('potato')});
     this.target_potato.onInitialize = () => {};
     this.add(this.target_potato);
 
@@ -206,7 +208,7 @@ export default class PotatoMatching extends Scene {
       members: [
         {
           graphic: new Sprite(
-            {image: ImageResources[this.target_potato.key], destSize: potato_size}),
+            {image: this.engine.skin[this.target_potato.key], destSize: potato_size}),
           pos: vec(0, 0)
         },
       ],
@@ -215,8 +217,9 @@ export default class PotatoMatching extends Scene {
     for (const s of Object.keys(this.target_face)) {
       const k = s as ComponentType;
       if (!this.target_face[k]) continue;
+      const component_key = this.target_face[k];
       graphicsGroup.members.push({
-        graphic: new Sprite({image: ImageResources[this.target_face[k]], destSize: component_size}),
+        graphic: new Sprite({image: this.engine.skin[this.target_face[k]], destSize: component_size}),
         pos: getOffset(k)
       })
     }
