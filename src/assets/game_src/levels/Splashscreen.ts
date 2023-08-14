@@ -16,15 +16,6 @@ export default class Splashscreen extends Scene {
 
   onActivate() {
     this.engine.UI_overlay = UI_overlays.SPLASHSCREEN
-
-    const timer = new Timer({
-      interval: this.duration,
-      fcn: () => {
-        this.engine.loadPotatoMatching();
-      }
-    })
-    this.add(timer);
-    timer.start();
   }
 
   onDeactivate() {
