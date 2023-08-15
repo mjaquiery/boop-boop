@@ -1,12 +1,12 @@
 import {Actor, Sprite} from "excalibur";
-import {PotatoImage} from "@/assets/game_src/utils/resources";
+import {PotatoImages} from "@/assets/game_src/utils/resources";
 import Game from "@/assets/game_src/main";
 
 export default class Potato extends Actor {
-  key: keyof PotatoImage;
+  key: keyof PotatoImages;
 
-  constructor(props?: any) {
-    if (!props || !props.key)
+  constructor(props: any) {
+    if (!props.key)
       throw new Error('Potato must be initialized with a key');
     const key = props.key;
     delete props.key;
@@ -24,7 +24,7 @@ export default class Potato extends Actor {
     const engine = this.scene.engine as Game;
     this.graphics.use(
       new Sprite({
-        image: engine.skin[this.key],
+        image: engine.skin.images[this.key],
         destSize: {width: this.width, height: this.height}
       })
     );

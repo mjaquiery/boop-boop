@@ -1,14 +1,17 @@
 import {Actor, Engine, Sprite} from "excalibur";
-import {ImageResources, random_resource_key_by_type} from "@/assets/game_src/utils/resources";
+import {ComponentImages, EyesImages, ImageResources, MouthImages} from "@/assets/game_src/utils/resources";
+import Game from "@/assets/game_src/main";
 
 export type ComponentType = 'eyes' | 'mouth';
 
 export default class Component extends Actor {
   type: ComponentType;
-  key: string;
+  key: keyof ComponentImages;
 
   constructor(props: any) {
+    if (!props.key) throw new Error('Component objects must have a key');
     if (!props.type) throw new Error('Component objects must have a type');
+
     const type = props.type;
     delete props.type;
     const key = props.key;
@@ -22,13 +25,14 @@ export default class Component extends Actor {
     }
     super({...defaults, ...props});
     this.type = type;
-    this.key = key || random_resource_key_by_type(type);
+    this.key = key;
   }
 
   onInitialize() {
+    const engine = this.scene.engine as Game;
     this.graphics.use(
       new Sprite({
-        image: ImageResources[this.key],
+        image: engine.skin.images[this.key],
         destSize: {width: this.width, height: this.height}
       })
     );
