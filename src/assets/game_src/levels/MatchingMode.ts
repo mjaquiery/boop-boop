@@ -51,7 +51,7 @@ const offsets: {[type in ComponentType]: Vector} = {
   mouth: vec(0, 40),
 }
 
-export default class PotatoMatching extends Scene {
+export default class MatchingMode extends Scene {
   declare engine: Game;
   spawn_timers: {[key: string]: Timer} = {}
   complete: boolean = false;

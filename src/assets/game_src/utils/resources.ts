@@ -2,11 +2,16 @@ import {ImageSource, Sound} from "excalibur";
 
 type integer = number;
 
+export const enum COMPONENT_TYPE {
+  EYES = 'eyes',
+  MOUTH = 'mouth'
+}
+
 export const enum IMAGE_TYPE {
-    EYES = 'eyes',
-    MOUTH = 'mouth',
-    POTATO = 'potato',
-    THIEF = 'thief'
+  EYES = COMPONENT_TYPE.EYES,
+  MOUTH = COMPONENT_TYPE.MOUTH,
+  POTATO = 'potato',
+  THIEF = 'thief'
 }
 
 export type EyesImages = { [key: `${IMAGE_TYPE.EYES}_${integer}`]: ImageSource }
@@ -17,18 +22,18 @@ export type ThiefImages = { [key: `${IMAGE_TYPE.THIEF}_${integer}`]: ImageSource
 export type ImageSkin = ComponentImages & PotatoImages & ThiefImages;
 
 export const enum SOUND_TYPE {
-    BACKGROUND_MUSIC = 'background_music',
-    THIEF_HIT = 'thief_hit',
-    THIEF_FLEE = 'thief_flee',
-    THIEF_APPEAR = 'thief_appear',
-    THIEF_WORK = 'thief_work',
-    THIEF_VICTORY = 'thief_victory',
-    COMPONENT_SPAWN = 'component_spawn',
-    COMPONENT_CLICKED = 'component_clicked',
-    COMPONENT_CORRECT = 'component_correct',
-    COMPONENT_INCORRECT = 'component_incorrect',
-    VICTORY_STINGER = 'victory_stinger',
-    FAILURE_STINGER = 'failure_stinger'
+  BACKGROUND_MUSIC = 'background_music',
+  THIEF_HIT = 'thief_hit',
+  THIEF_FLEE = 'thief_flee',
+  THIEF_APPEAR = 'thief_appear',
+  THIEF_WORK = 'thief_work',
+  THIEF_VICTORY = 'thief_victory',
+  COMPONENT_SPAWN = 'component_spawn',
+  COMPONENT_CLICKED = 'component_clicked',
+  COMPONENT_CORRECT = 'component_correct',
+  COMPONENT_INCORRECT = 'component_incorrect',
+  VICTORY_STINGER = 'victory_stinger',
+  FAILURE_STINGER = 'failure_stinger'
 }
 
 export type BackgroundMusic = { [key: `${SOUND_TYPE.BACKGROUND_MUSIC}_${integer}`]: Sound }

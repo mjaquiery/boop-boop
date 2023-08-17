@@ -1,5 +1,5 @@
 import {Actor, Engine, Sprite} from "excalibur";
-import {ComponentImages, EyesImages, ImageResources, MouthImages} from "@/assets/game_src/utils/resources";
+import {ComponentImages} from "@/assets/game_src/utils/resources";
 import Game from "@/assets/game_src/main";
 
 export type ComponentType = 'eyes' | 'mouth';
