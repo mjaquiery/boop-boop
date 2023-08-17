@@ -7,6 +7,7 @@ import {Settings, settings} from "./utils/settings";
 import API_Client, {API_GameData} from "./utils/API_Client";
 import Splashscreen from "@/assets/game_src/levels/Splashscreen";
 import GameStatistics, {GameStatisticsSummary, LevelStatistics} from "@/assets/game_src/utils/Statistics";
+import MusicManager from "@/assets/game_src/utils/MusicManager";
 
 export const level_names = {
   POTATO_MATCHING: 'PotatoMatching',
@@ -34,6 +35,7 @@ export default class Game extends Engine {
   level_statistics: LevelStatistics[] = [];
   update_wrapper: () => void;
   skin: Skin;
+  music_manager: MusicManager;
 
   constructor(props: any) {
     let get_settings_func = null;
@@ -63,6 +65,11 @@ export default class Game extends Engine {
     this.update_wrapper = update_wrapper
     this.skin = skin;
     this.statistics = new GameStatistics(this)
+
+    const tracks: Sound[] = [];
+    this.get_all_sounds(SOUND_TYPE.BACKGROUND_MUSIC)
+      .forEach(track => tracks.push(track));
+    this.music_manager = new MusicManager(tracks);
   }
   initialize() {
     this.updateScores()

@@ -14,7 +14,7 @@ export type MouthImages = { [key: `${IMAGE_TYPE.MOUTH}_${integer}`]: ImageSource
 export type ComponentImages = EyesImages & MouthImages;
 export type PotatoImages = { [key: `${IMAGE_TYPE.POTATO}_${integer}`]: ImageSource }
 export type ThiefImages = { [key: `${IMAGE_TYPE.THIEF}_${integer}`]: ImageSource }
-export type ImageSkin = EyesImages & MouthImages & PotatoImages & ThiefImages;
+export type ImageSkin = ComponentImages & PotatoImages & ThiefImages;
 
 export const enum SOUND_TYPE {
     BACKGROUND_MUSIC = 'background_music',
