@@ -1,24 +1,25 @@
 import {
-  ActionSequence, canonicalizeAngle,
-  CollisionType,
-  Color,
-  EmitterType,
-  Font,
-  FontUnit,
-  GraphicsGroup,
-  Label,
-  MoveTo,
-  ParallelActions,
-  ParticleEmitter,
-  RepeatForever,
-  RotationType,
-  Scene,
-  Sound,
-  Sprite,
-  TextAlign,
-  Timer,
-  vec,
-  Vector
+    ActionSequence,
+    canonicalizeAngle,
+    CollisionType,
+    Color,
+    EmitterType,
+    Font,
+    FontUnit,
+    GraphicsGroup,
+    Label,
+    MoveTo,
+    ParallelActions,
+    ParticleEmitter,
+    RepeatForever,
+    RotationType,
+    Scene,
+    Sound,
+    Sprite,
+    TextAlign,
+    Timer,
+    vec,
+    Vector
 } from "excalibur";
 import {PointerEvent} from "excalibur/build/dist/Input/PointerEvent";
 import Component, {type ComponentType} from "../actors/Component";
@@ -26,15 +27,14 @@ import Eyes from "../actors/Eyes";
 import Mouth from "../actors/Mouth";
 import Potato from "../actors/Potato";
 import Thief from "../actors/Thief";
-import {ImageResources, random_resource_key_by_type, SoundResources} from "../utils/resources";
 import Game, {level_names} from "../main";
-import MusicManager from "../utils/MusicManager";
 import {LevelStatistics} from "@/assets/game_src/utils/Statistics";
 import {Settings} from "@/assets/game_src/utils/settings";
+import {EyesImages, IMAGE_TYPE, MouthImages, PotatoImages, SOUND_TYPE} from "@/assets/game_src/utils/resources";
 
 type Face = {
-  eyes: string;
-  mouth: string;
+  eyes: keyof EyesImages;
+  mouth: keyof MouthImages;
   hair?: string;
   nose?: string;
   ears?: string;
@@ -51,8 +51,6 @@ const offsets: {[type in ComponentType]: Vector} = {
   mouth: vec(0, 40),
 }
 
-let music_manager: MusicManager | null = null;
-
 export default class PotatoMatching extends Scene {
   declare engine: Game;
   spawn_timers: {[key: string]: Timer} = {}
@@ -62,7 +60,6 @@ export default class PotatoMatching extends Scene {
   potato: Potato | null = null;
   target_potato: Potato | null = null;
   components: Component[] = [];
-  music_manager: MusicManager;
   celebration_text: Label | null = null;
   particle_emitters: ParticleEmitter[] = [];
   buckets: {targets: string[], distractors: string[]} = {targets: [], distractors: []};
@@ -74,19 +71,6 @@ export default class PotatoMatching extends Scene {
   _game_over_delay: number = 5000;
   _start_time: number = 0;
   _settings_cache: Settings|null = null;
-
-  constructor() {
-    super();
-    if (!music_manager) {
-      const tracks: Sound[] = [];
-      Object.keys(SoundResources)
-        .filter(k => k.startsWith('music_'))
-        .forEach(k => tracks.push(SoundResources[k as keyof typeof SoundResources]));
-      music_manager = new MusicManager(tracks);
-    }
-    this.music_manager = music_manager;
-    this.music_manager.will_change_track = true;
-  }
 
   get stats() {
     return this.engine.current_level_statistics;
@@ -128,21 +112,18 @@ export default class PotatoMatching extends Scene {
     this.createTarget();
 
     const potato = new Potato({
+      key: this.engine.get_random_image_key<PotatoImages>(IMAGE_TYPE.POTATO),
       x: this.engine.halfDrawWidth, y: this.engine.halfDrawHeight,
       width: potato_size.width, height: potato_size.height,
     });
     this.add(potato)
     this.potato = potato;
 
-    this.music_manager.play();
+    this.engine.music_manager.will_change_track = true;
+    this.engine.music_manager.play();
 
     // Set up timers
     this.spawn_timers = {
-      changeMusic: new Timer({
-        fcn: this.changeMusic.bind(this),
-        interval: this.settings.music_change_delay,
-        repeats: true,
-      }),
       spawnComponent: new Timer({
         fcn: this.spawnComponent.bind(this),
         interval: this.settings.component_spawn_delay_min,
@@ -180,30 +161,35 @@ export default class PotatoMatching extends Scene {
     }
 
     this.target_face = {
-      eyes: random_resource_key_by_type('eyes'),
-      mouth: random_resource_key_by_type('mouth'),
-      hair: Math.random() < .2? random_resource_key_by_type('hair') : undefined,
-      nose: Math.random() < .2? random_resource_key_by_type('nose') : undefined,
-      ears: Math.random() < .2? random_resource_key_by_type('ears') : undefined,
-      glasses: Math.random() < .2? random_resource_key_by_type('glasses') : undefined,
-      mustache: Math.random() < .2? random_resource_key_by_type('mustache') : undefined,
+      eyes: this.engine.get_random_image_key<EyesImages>(IMAGE_TYPE.EYES),
+      mouth: this.engine.get_random_image_key<MouthImages>(IMAGE_TYPE.MOUTH),
+      // hair: Math.random() < .2? random_resource_key_by_type('hair') : undefined,
+      // nose: Math.random() < .2? random_resource_key_by_type('nose') : undefined,
+      // ears: Math.random() < .2? random_resource_key_by_type('ears') : undefined,
+      // glasses: Math.random() < .2? random_resource_key_by_type('glasses') : undefined,
+      // mustache: Math.random() < .2? random_resource_key_by_type('mustache') : undefined,
     }
 
     // Sort component keys into buckets
     for (const s of Object.keys(this.target_face)) {
       const k = s as ComponentType;
       const key = this.target_face[k];
-      let resources = Object.keys(ImageResources);
+      let resources = [
+        ...this.engine.get_all_image_keys<EyesImages>(IMAGE_TYPE.EYES),
+        ...this.engine.get_all_image_keys<MouthImages>(IMAGE_TYPE.MOUTH),
+      ];
       if (key) {
         this.buckets.targets.push(key);
-        resources = resources.filter(k => k !== key)
+        resources = resources.filter(k => (k as string) !== key)
       }
       const matches = resources.filter(k => k.startsWith(s));
       this.buckets.distractors.push(...matches);
     }
 
     // Create the target
-    this.target_potato = new Potato({key: random_resource_key_by_type('potato')});
+    this.target_potato = new Potato({
+        key: this.engine.get_random_image_key<PotatoImages>(IMAGE_TYPE.POTATO)
+    });
     this.target_potato.onInitialize = () => {};
     this.add(this.target_potato);
 
@@ -211,7 +197,7 @@ export default class PotatoMatching extends Scene {
       members: [
         {
           graphic: new Sprite(
-            {image: ImageResources[this.target_potato.key], destSize: potato_size}),
+            {image: this.engine.skin.images[this.target_potato.key], destSize: potato_size}),
           pos: vec(0, 0)
         },
       ],
@@ -220,8 +206,9 @@ export default class PotatoMatching extends Scene {
     for (const s of Object.keys(this.target_face)) {
       const k = s as ComponentType;
       if (!this.target_face[k]) continue;
+      const component_key = this.target_face[k];
       graphicsGroup.members.push({
-        graphic: new Sprite({image: ImageResources[this.target_face[k]], destSize: component_size}),
+        graphic: new Sprite({image: this.engine.skin.images[this.target_face[k]], destSize: component_size}),
         pos: getOffset(k)
       })
     }
@@ -282,9 +269,7 @@ export default class PotatoMatching extends Scene {
         );
         this.components.push(component);
         this.add(component);
-        const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('bubble_'));
-        const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
-        SoundResources[sound_key].play();
+        this.engine.get_random_sound(SOUND_TYPE.COMPONENT_SPAWN)?.play();
         const lifetime = this.settings.component_lifetime;
         const inflation_duration = lifetime / 3;
         const inflation_speed = Math.max(component_size.width, component_size.height) / inflation_duration * 1000
@@ -312,7 +297,7 @@ export default class PotatoMatching extends Scene {
   }
 
   addComponentToFace(component: Component) {
-    SoundResources.click.play();
+    this.engine.get_random_sound(SOUND_TYPE.COMPONENT_CLICKED)?.play();
     // this.camera_display?.canvas.flagDirty();
     let copy: Component | null = null;
     const props = {
@@ -334,7 +319,7 @@ export default class PotatoMatching extends Scene {
     copy.actions.moveTo(this.potato!.pos.add(offsets[copy.type]), 1000).toPromise().then(() => {
       if (copy?.type && this.target_face && copy.type in this.target_face)
         if (this.target_face[copy.type] === copy.key) {
-          SoundResources.chime.play();
+          this.engine.get_random_sound(SOUND_TYPE.COMPONENT_CORRECT)?.play();
           this.checkWinCondition();
           this.stats.clicks.value++;
         } else
@@ -363,8 +348,8 @@ export default class PotatoMatching extends Scene {
   playWinAnimation(duration: number = 1000, complete_after: number = 0) {
     this.stats.time_taken.value = this.engine.clock.now() - this._start_time;
     if (complete_after === 0) complete_after = Math.max(this._game_over_delay, duration);
-    this.music_manager.stop();
-    SoundResources.fanfare.play();
+    this.engine.music_manager.stop();
+    this.engine.get_random_sound(SOUND_TYPE.VICTORY_STINGER)?.play();
     this.stopNeediness(true);
     this.components.forEach(component => this.killComponent(component, vec(1000, 1000)))
     // Get target_potato to potato offset
@@ -468,11 +453,6 @@ export default class PotatoMatching extends Scene {
     });
   }
 
-  changeMusic() {
-    if (this.complete) return;
-    this.music_manager.will_change_track = true;
-  }
-
   spawnThief() {
     if (this.complete) return;
     if (!this.potato_thief?.active) {
@@ -506,9 +486,7 @@ export default class PotatoMatching extends Scene {
           this.potato_thief!.graphics.use(anim)
           anim.events.on('end', this.needsUnmet.bind(this))
           anim.events.on('frame', () => {
-            const mumble_matches = Object.keys(SoundResources).filter(k => k.startsWith('mumble_'));
-            const mumble_key = mumble_matches[Math.floor(Math.random() * mumble_matches.length)] as keyof typeof SoundResources;
-            SoundResources[mumble_key].play();
+            this.engine.get_random_sound(SOUND_TYPE.THIEF_WORK)?.play();
           })
           this.potato_thief!.on('pointerdown', () => {
             this.stats.thieves_shooed.value++;
@@ -532,9 +510,9 @@ export default class PotatoMatching extends Scene {
 
     if (!fast) {
       this.camera.shake(10, 10, 200)
-      const sound_matches = Object.keys(SoundResources).filter(k => k.startsWith('annoyed_'));
-      const sound_key = sound_matches[Math.floor(Math.random() * sound_matches.length)] as keyof typeof SoundResources;
-      SoundResources[sound_key].play();
+      this.engine.get_random_sound(SOUND_TYPE.THIEF_HIT)!
+          .play()
+          .then(() => this.engine.get_random_sound(SOUND_TYPE.THIEF_FLEE)?.play());
     }
   }
 
@@ -556,11 +534,9 @@ export default class PotatoMatching extends Scene {
     this.complete = true;
     this.potato_thief!.off('pointerdown')
 
-    this.music_manager.stop();
-    const laugh_matches = Object.keys(SoundResources).filter(k => k.startsWith('laugh_'));
-    const laugh_key = laugh_matches[Math.floor(Math.random() * laugh_matches.length)] as keyof typeof SoundResources;
-    SoundResources.failure.play()
-      .then(() => SoundResources[laugh_key].play());
+    this.engine.music_manager.stop();
+    this.engine.get_random_sound(SOUND_TYPE.FAILURE_STINGER)?.play()
+      .then(() => this.engine.get_random_sound(SOUND_TYPE.THIEF_VICTORY)?.play());
 
     this.components.forEach(component => this.killComponent(component, vec(1000, 1000)))
     this.target_potato!.kill()

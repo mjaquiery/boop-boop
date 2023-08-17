@@ -1,17 +1,10 @@
 import {Actor, Animation, AnimationStrategy, range, SpriteSheet} from "excalibur";
-import {ImageResources} from "@/assets/game_src/utils/resources";
+import {IMAGE_TYPE} from "@/assets/game_src/utils/resources";
+import Game from "@/assets/game_src/main";
 
 export default class Thief extends Actor {
   duration: number;
-  spriteSheet: SpriteSheet = SpriteSheet.fromImageSource({
-    image: ImageResources["thief"],
-    grid: {
-      rows: 2,
-      columns: 3,
-      spriteWidth: 100,
-      spriteHeight: 100
-    }
-  });
+  spriteSheet: SpriteSheet|null = null;
   needyAnimation: Animation|null = null;
   unneedyAnimation: Animation|null = null;
 
@@ -31,6 +24,8 @@ export default class Thief extends Actor {
   }
 
   makeUnneedyAnimation(duration: number = 1000) {
+    if (this.spriteSheet === null)
+      throw new Error('Thief spriteSheet is null when making unneedy animation');
     if (this.unneedyAnimation === null) {
       this.unneedyAnimation = Animation.fromSpriteSheet(
         this.spriteSheet,
@@ -44,6 +39,17 @@ export default class Thief extends Actor {
   }
 
   onInitialize() {
+    const engine = this.scene.engine as Game;
+    this.spriteSheet = SpriteSheet.fromImageSource({
+    image: engine.get_random_image(IMAGE_TYPE.THIEF),
+    grid: {
+      rows: 2,
+      columns: 3,
+      spriteWidth: 100,
+      spriteHeight: 100
+    }
+  });
+
     const sprite = this.spriteSheet.getSprite(0, 0);
     if (sprite) {
       this.spriteSheet.sprites.forEach(

@@ -1,12 +1,13 @@
-import {clamp, DisplayMode, Engine, Input, Loader} from "excalibur";
+import {clamp, DisplayMode, Engine, ImageSource, Input, Loader, Sound} from "excalibur";
 import {PointerEvent} from "excalibur/build/dist/Input/PointerEvent";
 import PotatoMatching from "./levels/PotatoMatching";
 import Scoresheet from "./levels/Scoresheet";
-import {ImageResources, SoundResources} from "./utils/resources";
+import {IMAGE_TYPE, ImageSkin, PotatoSkin, Skin, SOUND_TYPE, SoundSkin} from "./utils/resources";
 import {Settings, settings} from "./utils/settings";
 import API_Client, {API_GameData} from "./utils/API_Client";
 import Splashscreen from "@/assets/game_src/levels/Splashscreen";
 import GameStatistics, {GameStatisticsSummary, LevelStatistics} from "@/assets/game_src/utils/Statistics";
+import MusicManager from "@/assets/game_src/utils/MusicManager";
 
 export const level_names = {
   POTATO_MATCHING: 'PotatoMatching',
@@ -33,6 +34,8 @@ export default class Game extends Engine {
   statistics: GameStatistics;
   level_statistics: LevelStatistics[] = [];
   update_wrapper: () => void;
+  skin: Skin;
+  music_manager: MusicManager;
 
   constructor(props: any) {
     let get_settings_func = null;
@@ -45,6 +48,11 @@ export default class Game extends Engine {
       update_wrapper = props.update_wrapper
       delete props.update_wrapper
     }
+    let skin = PotatoSkin;
+    if (Object.keys(props).includes('skin')) {
+      skin = props.skin
+      delete props.skin
+    }
     super({
       height: 600,
       width: 800,
@@ -55,7 +63,13 @@ export default class Game extends Engine {
     if (get_settings_func)
       this.get_settings_func = get_settings_func
     this.update_wrapper = update_wrapper
+    this.skin = skin;
     this.statistics = new GameStatistics(this)
+
+    const tracks: Sound[] = [];
+    this.get_all_sounds(SOUND_TYPE.BACKGROUND_MUSIC)
+      .forEach(track => tracks.push(track));
+    this.music_manager = new MusicManager(tracks);
   }
   initialize() {
     this.updateScores()
@@ -64,23 +78,22 @@ export default class Game extends Engine {
     this.difficulty_level = this.settings.start_level??0;
     const loader = new Loader();
     loader.playButtonText = "Begin";
-    for (const resource in ImageResources) {
-      loader.addResource(ImageResources[resource]);
+    for (const resource in this.skin.images) {;
+      loader.addResource(this.skin.images[resource as keyof ImageSkin]);
     }
-    for (const resource in SoundResources) {
-      const r = resource as keyof typeof SoundResources;
-      loader.addResource(SoundResources[r])
+    for (const resource in this.skin.sounds) {
+      loader.addResource(this.skin.sounds[resource as keyof SoundSkin]);
     }
     this.add(level_names.SCORESHEET, new Scoresheet())
     this.add(level_names.SPLASHSCREEN, new Splashscreen())
     this.start(loader)
-      .then(() => Promise.allSettled([
-        this.activateCamera(),
-        this.settings.send_data_consent && this.api_client.initialize(this.game_data),
-        this.waitForFontLoad('52px Monomaniac One')
-      ]))
-      .then(() => this.screen.goFullScreen('excalibur-root'))
-      .then(() => this.goToScene(level_names.SPLASHSCREEN))
+        .then(() => Promise.allSettled([
+          this.activateCamera(),
+          this.settings.send_data_consent && this.api_client.initialize(this.game_data),
+          this.waitForFontLoad('52px Monomaniac One')
+        ]))
+        .then(() => this.screen.goFullScreen('excalibur-root'))
+        .then(() => this.goToScene(level_names.SPLASHSCREEN))
   }
 
   loadPotatoMatching() {
@@ -107,10 +120,10 @@ export default class Game extends Engine {
         height: { ideal: 999999 }
       }
     })
-      .catch((err) => {
-        console.error("Failed to get webcam", err);
-        return null;
-      });
+        .catch((err) => {
+          console.error("Failed to get webcam", err);
+          return null;
+        });
     if (this.webcam.srcObject) {
       await this.webcam.play();
       this.webcam_canvas = document.createElement('canvas');
@@ -145,7 +158,7 @@ export default class Game extends Engine {
   get game_data() {
     return {
       name: 'Potato Head',
-      version: '0.2.0',
+      version: '0.2.2',
       fullScreen: document?.fullscreenElement?.id === 'excalibur-root',
       game_stats: this.statistics.all,
       level_stats: this.level_statistics,
@@ -159,7 +172,7 @@ export default class Game extends Engine {
     if (!classes || !classes.contains('enabled'))
       return null;
     return Object.values(UI_overlays)
-      .find((overlay) => classes.contains(overlay)) as keyof typeof UI_overlays|null;
+        .find((overlay) => classes.contains(overlay)) as keyof typeof UI_overlays|null;
   }
 
   set UI_overlay(overlay: string|null) {
@@ -256,6 +269,39 @@ export default class Game extends Engine {
       console.log("Reporting to API", game_data, click_data, (!!image).toString())
       this.api_client.report(game_data, click_data, image || "");
     }
+  }
+
+  get_random_sound_key: <T>(type: SOUND_TYPE) => keyof T = <T>(type: SOUND_TYPE) => {
+    const matches = Object.keys(this.skin.sounds).filter(k => k.startsWith(type));
+    return matches[Math.floor(Math.random() * matches.length)] as keyof T;
+  }
+
+  get_random_sound: (type: SOUND_TYPE) => Sound = (type: SOUND_TYPE) => {
+    return this.skin.sounds[this.get_random_sound_key(type)];
+  }
+
+  get_all_sound_keys: <T>(type: SOUND_TYPE) => (keyof T)[] = <T>(type: SOUND_TYPE) => {
+      return Object.keys(this.skin.sounds).filter(k => k.startsWith(type)) as (keyof T)[];
+  }
+  get_all_sounds: (type: SOUND_TYPE) => Sound[] = (type: SOUND_TYPE) => {
+        return this.get_all_sound_keys(type).map(k => this.skin.sounds[k as keyof SoundSkin])
+  }
+
+  get_random_image_key: <T>(type: IMAGE_TYPE) => keyof T = <T>(type: IMAGE_TYPE) => {
+    const matches = Object.keys(this.skin.images).filter(k => k.startsWith(type));
+    return matches[Math.floor(Math.random() * matches.length)] as keyof T;
+  }
+
+  get_random_image: (type: IMAGE_TYPE) => ImageSource = (type: IMAGE_TYPE) => {
+    return this.skin.images[this.get_random_image_key(type)];
+  }
+
+  get_all_image_keys: <T>(type: IMAGE_TYPE) => (keyof T)[] = <T>(type: IMAGE_TYPE) => {
+    return Object.keys(this.skin.images).filter(k => k.startsWith(type)) as (keyof T)[];
+  }
+
+  get_all_images: (type: IMAGE_TYPE) => ImageSource[] = (type: IMAGE_TYPE) => {
+    return this.get_all_image_keys(type).map(k => this.skin.images[k as keyof ImageSkin])
   }
 }
 
