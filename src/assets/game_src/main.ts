@@ -158,7 +158,7 @@ export default class Game extends Engine {
   get game_data() {
     return {
       name: 'Potato Head',
-      version: '0.2.1',
+      version: '0.2.2',
       fullScreen: document?.fullscreenElement?.id === 'excalibur-root',
       game_stats: this.statistics.all,
       level_stats: this.level_statistics,
