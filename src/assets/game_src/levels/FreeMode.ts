@@ -17,7 +17,7 @@ import Component, {type ComponentType} from "../actors/Component";
 import Eyes from "../actors/Eyes";
 import Mouth from "../actors/Mouth";
 import Potato from "../actors/Potato";
-import Game, {UI_overlays} from "../main";
+import Game from "../main";
 import {Settings} from "@/assets/game_src/utils/settings";
 import {
     COMPONENT_TYPE,
@@ -63,7 +63,7 @@ export default class FreeMode extends Scene {
     }
 
     clean() {
-        this.engine.UI_overlay = null
+        this.engine.music_manager.stop();
         this.potato?.kill()
         this.potato = null;
         this.components.forEach(c => c.kill())
@@ -83,7 +83,6 @@ export default class FreeMode extends Scene {
 
     onActivate() {
         this.clean();
-        this.engine.UI_overlay = UI_overlays.FREE_PLAY
 
         this.component_slots = Object.keys(offsets).map((type) => {
             const t = type as ComponentType;

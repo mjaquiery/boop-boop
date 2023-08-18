@@ -147,7 +147,7 @@
                   title="Dance"
               >
                 <template v-slot:prepend>
-                  <v-icon size="x-large">mdi-shimmer</v-icon>
+                  <v-img width="2em" src="/images/dance.svg" class="me-8" />
                 </template>
                 <template v-slot:subtitle>
                   When you have the potato you want, you can <strong>make it dance</strong>.
@@ -164,30 +164,6 @@
                 :block="true"
             >Play!</v-btn>
             <v-spacer />
-          </v-card-actions>
-        </v-card>
-      </v-sheet>
-      <v-sheet id="excalibur-freeplay" class="ui">
-        <v-card class="pa-2">
-          <v-card-actions>
-            <v-btn
-                @click="game?.currentScene instanceof FreeMode && game?.currentScene.dance()"
-                color="success"
-            >
-              Dance!
-            </v-btn>
-            <v-btn
-                @click="() => game?.loadFreePlay()"
-                color="warning"
-            >
-              Restart
-            </v-btn>
-            <v-btn
-                @click="game?.initialize()"
-                color="error"
-            >
-              Quit
-            </v-btn>
           </v-card-actions>
         </v-card>
       </v-sheet>
@@ -212,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import GameEngine from "@/assets/game_src/main";
+import GameEngine, {level_names} from "@/assets/game_src/main";
 import {computed, markRaw, onMounted, ref, watch} from 'vue'
 import {useSettingsStore} from "@/stores/settings";
 import {DevTool} from "@excaliburjs/dev-tools";
@@ -327,14 +303,6 @@ div {position: relative;}
 #excalibur-root #excalibur-ui.splashscreen #excalibur-splashscreen {
   /* This will make the UI appear on top of the canvas */
   display: block;
-}
-#excalibur-root #excalibur-ui.freeplay #excalibur-freeplay {
-  /* This will make the UI appear on top of the canvas */
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
 }
 
 .high {

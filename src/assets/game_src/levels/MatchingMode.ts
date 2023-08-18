@@ -83,6 +83,7 @@ export default class MatchingMode extends Scene {
   }
 
   clean() {
+    this.engine.music_manager.stop();
     this.potato?.kill()
     this.potato = null;
     this.target_potato?.kill()

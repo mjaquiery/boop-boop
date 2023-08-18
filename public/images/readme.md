@@ -3,6 +3,11 @@ Cropped from ![mouth-n-eyes.svg](mouth-n-eyes.svg)
 From [PublicDomainVectors.org](https://publicdomainvectors.org/en/free-clipart/Cartoon-Mouth-and-Eyes/48991.html)  
 License [Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)  
 
+# `dance.svg`
+![dance.svg](dance.svg)
+From [OnlineWebFonts](https://www.onlinewebfonts.com/icon/574153)
+License [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+
 ## `potato_01.png`
 ![potato_01.png](potato_01.png)  
 From [creazilla.com](https://creazilla.com/nodes/13295-potato-clipart)  
