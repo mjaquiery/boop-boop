@@ -33,7 +33,7 @@
   "homepage": "https://github.com/mjaquiery/boop-boop#readme",
   "dependencies": {
     "@mdi/font": "7.0.96",
-    "pinia": "^2.1.4",
+    "pinia": "^2.1.6",
     "roboto-fontface": "*",
     "vue": "^3.2.0",
     "vue-router": "^4.0.0",
