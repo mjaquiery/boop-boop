@@ -15,6 +15,7 @@ type NeedyPotatoSettings = {
 
 // Keep this flat so that it can be safely mutated by the settings store
 export type Settings = {
+  game_mode: "matching" | "free_play";  // The game mode
   send_data_consent?: boolean;  // Whether to send data to the server
   start_level?: number;  // The level to start at
   difficulty_step: number;  // How much to increase difficulty by each level
@@ -22,6 +23,7 @@ export type Settings = {
 } & ComponentsSettings & NeedyPotatoSettings
 
 export const adult_settings: Settings = {
+  game_mode: "matching",
   start_level: 0,
   difficulty_step: 0.1,
   max_components: 20,
@@ -37,6 +39,7 @@ export const adult_settings: Settings = {
 }
 
 export const child_settings: Settings = {
+  game_mode: "matching",
   start_level: 0,
   difficulty_step: 0.05,
   max_components: 10,
@@ -52,19 +55,19 @@ export const child_settings: Settings = {
 }
 
 export const free_play_settings: Settings = {
+  game_mode: "free_play",
   start_level: 0,
-  difficulty_step: 0.05,
+  difficulty_step: 0,
   max_components: 10,
   component_spawn_delay_min: 1000,
   component_spawn_delay_variation: 500,
   component_lifetime: 5000,
-  target_frequency: 1 / 3,
+  target_frequency: 0,
   music_change_delay: 60000,
   needy_potato_enabled: false,
-  needy_potato_delay_min: 10000,
-  needy_potato_delay_variation: 5000,
-  needy_potato_duration: 6000,
+  needy_potato_delay_min: 0,
+  needy_potato_delay_variation: 0,
+  needy_potato_duration: 0,
 }
 
-export const settings: Settings = adult_settings;
-
+export const settings: Settings = child_settings;

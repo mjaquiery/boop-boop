@@ -2,11 +2,16 @@ import {ImageSource, Sound} from "excalibur";
 
 type integer = number;
 
+export const enum COMPONENT_TYPE {
+  EYES = 'eyes',
+  MOUTH = 'mouth'
+}
+
 export const enum IMAGE_TYPE {
-    EYES = 'eyes',
-    MOUTH = 'mouth',
-    POTATO = 'potato',
-    THIEF = 'thief'
+  EYES = COMPONENT_TYPE.EYES,
+  MOUTH = COMPONENT_TYPE.MOUTH,
+  POTATO = 'potato',
+  THIEF = 'thief'
 }
 
 export type EyesImages = { [key: `${IMAGE_TYPE.EYES}_${integer}`]: ImageSource }
@@ -17,18 +22,18 @@ export type ThiefImages = { [key: `${IMAGE_TYPE.THIEF}_${integer}`]: ImageSource
 export type ImageSkin = ComponentImages & PotatoImages & ThiefImages;
 
 export const enum SOUND_TYPE {
-    BACKGROUND_MUSIC = 'background_music',
-    THIEF_HIT = 'thief_hit',
-    THIEF_FLEE = 'thief_flee',
-    THIEF_APPEAR = 'thief_appear',
-    THIEF_WORK = 'thief_work',
-    THIEF_VICTORY = 'thief_victory',
-    COMPONENT_SPAWN = 'component_spawn',
-    COMPONENT_CLICKED = 'component_clicked',
-    COMPONENT_CORRECT = 'component_correct',
-    COMPONENT_INCORRECT = 'component_incorrect',
-    VICTORY_STINGER = 'victory_stinger',
-    FAILURE_STINGER = 'failure_stinger'
+  BACKGROUND_MUSIC = 'background_music',
+  THIEF_HIT = 'thief_hit',
+  THIEF_FLEE = 'thief_flee',
+  THIEF_APPEAR = 'thief_appear',
+  THIEF_WORK = 'thief_work',
+  THIEF_VICTORY = 'thief_victory',
+  COMPONENT_SPAWN = 'component_spawn',
+  COMPONENT_CLICKED = 'component_clicked',
+  COMPONENT_CORRECT = 'component_correct',
+  COMPONENT_INCORRECT = 'component_incorrect',
+  VICTORY_STINGER = 'victory_stinger',
+  FAILURE_STINGER = 'failure_stinger'
 }
 
 export type BackgroundMusic = { [key: `${SOUND_TYPE.BACKGROUND_MUSIC}_${integer}`]: Sound }
@@ -52,7 +57,7 @@ export type StingerSounds = VictoryStingerSounds & FailureStingerSounds;
 
 export type SoundSkin = ThiefSounds & ComponentSounds & StingerSounds & BackgroundMusic;
 
-export type Skin = { images: ImageSkin, sounds: SoundSkin };
+export type Skin = { images: ImageSkin, sounds: SoundSkin, ui: UISkin };
 
 const zeroPad = (num: integer, places: integer = 2) => String(num).padStart(places, '0')
 
@@ -191,7 +196,28 @@ export const SoundResources: SoundSkin = {
   ...failure_stinger_sound
 }
 
+export const enum UI_IMAGE {
+  RESTART_BUTTON_HOVER = 'restart_button_hover',
+  RESTART_BUTTON_IDLE = 'restart_button_idle',
+  DANCE_BUTTON_HOVER = 'dance_button_hover',
+  DANCE_BUTTON_IDLE = 'dance_button_idle',
+  QUIT_BUTTON_HOVER = 'quit_button_hover',
+  QUIT_BUTTON_IDLE = 'quit_button_idle',
+}
+
+export type UISkin = { [key in UI_IMAGE]: ImageSource }
+
+export const UIResources: UISkin = {
+  restart_button_hover: new ImageSource(`${import.meta.env.BASE_URL}ui/restart_button_hover.png`),
+  restart_button_idle: new ImageSource(`${import.meta.env.BASE_URL}ui/restart_button_idle.png`),
+  dance_button_hover: new ImageSource(`${import.meta.env.BASE_URL}ui/dance_button_hover.png`),
+  dance_button_idle: new ImageSource(`${import.meta.env.BASE_URL}ui/dance_button_idle.png`),
+  quit_button_hover: new ImageSource(`${import.meta.env.BASE_URL}ui/quit_button_hover.png`),
+  quit_button_idle: new ImageSource(`${import.meta.env.BASE_URL}ui/quit_button_idle.png`),
+}
+
 export const PotatoSkin: Skin = {
   images: ImageResources,
-  sounds: SoundResources
+  sounds: SoundResources,
+  ui: UIResources
 }

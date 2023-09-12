@@ -40,7 +40,7 @@ export default class MusicManager {
       this.sequential_play_count++;
 
     this.playing = true;
-    this.tracks[this.current_track].play().then(() => {
+    this.tracks[this.current_track].play(0.05).then(() => {
       this.keep_playing();
     });
     this.iteration++;

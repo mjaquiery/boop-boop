@@ -11,6 +11,7 @@ export const useSettingsStore = defineStore('game', {
   state: () => ({..._settings, send_data_consent: undefined as boolean | undefined}),
   getters: {
     to_raw: (state: Settings) => ({
+      game_mode: state.game_mode,
       send_data_consent: state.send_data_consent,
       difficulty_step: state.difficulty_step,
       start_level: state.start_level,
