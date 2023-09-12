@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/mjaquiery/boop-boop#readme",
   "dependencies": {
-    "@mdi/font": "7.0.96",
+    "@mdi/font": "7.2.96",
     "pinia": "^2.1.4",
     "roboto-fontface": "*",
     "vue": "^3.2.0",
