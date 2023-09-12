@@ -1,0 +1,50 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Build
+
+on:
+  # Run when Docs workflow completes
+  workflow_run:
+    branches:
+      - main
+    workflows: [CI]
+    types:
+      - completed
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Allow one concurrent deployment
+concurrency:
+  group: "build"
+  cancel-in-progress: true
+
+jobs:
+  # Single deploy job since we're just deploying
+  build:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+      - name: Install
+        run: npm install
+      - name: Build
+        run: npx vite build --base=/boop-boop/
+      - name: Push to gh-pages branch
+        run: |
+         git worktree add gh-pages
+         git config user.name "Deploy from CI"
+         git config user.email ""
+         cd gh-pages
+         # Delete the ref to avoid keeping history.
+         git update-ref -d refs/heads/gh-pages
+         rm -rf *
+         mv ../dist/* .
+         git add .
+         git commit -m "Deploy $GITHUB_SHA to gh-pages"
+         git push --set-upstream origin gh-pages --force
