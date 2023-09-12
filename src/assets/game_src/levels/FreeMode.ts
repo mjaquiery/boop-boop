@@ -247,7 +247,7 @@ export default class FreeMode extends Scene {
         const x = Math.random() * third + (Math.random() < .5? 0 : third * 2) + component_size.width / 2;
         const height = this.engine.drawHeight - component_size.height - BUTTON_HEIGHT * 2;
         const y = Math.random() * height + component_size.height / 2 - BUTTON_HEIGHT * 2;
-        const props = {x, y, width: 1, height: 1};
+        const props = {x, y, width: 10, height: 10};
         const component = this.getComponentByKey(component_key, props);
         if (!component) return;
         component.body.collisionType = CollisionType.Active;
@@ -265,7 +265,7 @@ export default class FreeMode extends Scene {
             inflation_speed * component_size.width / (component_size.width + component_size.height),
             inflation_speed * component_size.height / (component_size.width + component_size.height)
         )
-        component.actions.scaleTo(vec(component_size.width, component_size.height), scale_speed);
+        component.actions.scaleTo(vec(component_size.width/10, component_size.height/10), scale_speed);
         this.engine.clock.schedule(
             () => {
               if (this.selected_component !== component)
