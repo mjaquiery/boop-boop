@@ -8,7 +8,7 @@ export default class ComponentSlot extends Actor {
     const defaults = {
       x: 150,
       y: 150,
-      radius: 5,
+      radius: 10,
       color: Color.Yellow,
       z: 100,
       opacity: 0.25

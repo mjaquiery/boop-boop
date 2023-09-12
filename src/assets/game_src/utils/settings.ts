@@ -70,4 +70,4 @@ export const free_play_settings: Settings = {
   needy_potato_duration: 0,
 }
 
-export const settings: Settings = adult_settings;
+export const settings: Settings = child_settings;

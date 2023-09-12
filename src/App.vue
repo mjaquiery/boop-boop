@@ -43,6 +43,10 @@
                   <Welcome />
                 </v-window-item>
 
+                <v-window-item :value="pages.MODE">
+                  <Mode />
+                </v-window-item>
+
                 <v-window-item :value="pages.DIFFICULTY">
                   <Difficulty />
                 </v-window-item>
@@ -82,6 +86,7 @@ import {ref, watch} from "vue";
 import Welcome from "@/components/Welcome.vue";
 import Difficulty from "@/components/Difficulty.vue";
 import StudyDetails from "@/components/StudyDetails.vue";
+import Mode from "@/components/Mode.vue";
 
 const {currentPage, detailsOpen, settingsOpen} = storeToRefs(useDefaultStore())
 

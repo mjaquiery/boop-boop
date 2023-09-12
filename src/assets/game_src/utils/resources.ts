@@ -57,7 +57,7 @@ export type StingerSounds = VictoryStingerSounds & FailureStingerSounds;
 
 export type SoundSkin = ThiefSounds & ComponentSounds & StingerSounds & BackgroundMusic;
 
-export type Skin = { images: ImageSkin, sounds: SoundSkin };
+export type Skin = { images: ImageSkin, sounds: SoundSkin, ui: UISkin };
 
 const zeroPad = (num: integer, places: integer = 2) => String(num).padStart(places, '0')
 
@@ -196,7 +196,28 @@ export const SoundResources: SoundSkin = {
   ...failure_stinger_sound
 }
 
+export const enum UI_IMAGE {
+  RESTART_BUTTON_HOVER = 'restart_button_hover',
+  RESTART_BUTTON_IDLE = 'restart_button_idle',
+  DANCE_BUTTON_HOVER = 'dance_button_hover',
+  DANCE_BUTTON_IDLE = 'dance_button_idle',
+  QUIT_BUTTON_HOVER = 'quit_button_hover',
+  QUIT_BUTTON_IDLE = 'quit_button_idle',
+}
+
+export type UISkin = { [key in UI_IMAGE]: ImageSource }
+
+export const UIResources: UISkin = {
+  restart_button_hover: new ImageSource(`${import.meta.env.BASE_URL}ui/restart_button_hover.png`),
+  restart_button_idle: new ImageSource(`${import.meta.env.BASE_URL}ui/restart_button_idle.png`),
+  dance_button_hover: new ImageSource(`${import.meta.env.BASE_URL}ui/dance_button_hover.png`),
+  dance_button_idle: new ImageSource(`${import.meta.env.BASE_URL}ui/dance_button_idle.png`),
+  quit_button_hover: new ImageSource(`${import.meta.env.BASE_URL}ui/quit_button_hover.png`),
+  quit_button_idle: new ImageSource(`${import.meta.env.BASE_URL}ui/quit_button_idle.png`),
+}
+
 export const PotatoSkin: Skin = {
   images: ImageResources,
-  sounds: SoundResources
+  sounds: SoundResources,
+  ui: UIResources
 }

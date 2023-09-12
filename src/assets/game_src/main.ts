@@ -2,7 +2,7 @@ import {clamp, DisplayMode, Engine, ImageSource, Input, Loader, Sound} from "exc
 import {PointerEvent} from "excalibur/build/dist/Input/PointerEvent";
 import MatchingMode from "./levels/MatchingMode";
 import Scoresheet from "./levels/Scoresheet";
-import {IMAGE_TYPE, ImageSkin, PotatoSkin, Skin, SOUND_TYPE, SoundSkin} from "./utils/resources";
+import {IMAGE_TYPE, ImageSkin, PotatoSkin, Skin, SOUND_TYPE, SoundSkin, UISkin} from "./utils/resources";
 import {Settings, settings} from "./utils/settings";
 import API_Client, {API_GameData} from "./utils/API_Client";
 import Splashscreen from "@/assets/game_src/levels/Splashscreen";
@@ -86,6 +86,9 @@ export default class Game extends Engine {
         }
         for (const resource in this.skin.sounds) {
             loader.addResource(this.skin.sounds[resource as keyof SoundSkin]);
+        }
+        for (const resource in this.skin.ui) {
+            loader.addResource(this.skin.ui[resource as keyof UISkin]);
         }
         this.add(level_names.SCORESHEET, new Scoresheet())
         this.add(level_names.SPLASHSCREEN, new Splashscreen())

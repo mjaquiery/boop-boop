@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import {useDefaultStore} from "@/stores/default";
+import {useDefaultStore, pages} from "@/stores/default";
 import {storeToRefs} from "pinia";
 import {useSettingsStore} from "@/stores/settings";
-import child_img from '@/assets/child.png';
-import adult_img from '@/assets/adult.png';
+import explore_img from '@/assets/explore.png';
+import challenge_img from '@/assets/challenge.png';
 
-const {currentPage, difficultySelected, settingsOpen} = storeToRefs(useDefaultStore())
+const {currentPage, modeSelected, settingsOpen} = storeToRefs(useDefaultStore())
 const {load_defaults} = useSettingsStore()
 
-const process_click = (value: "adult"|"child") => {
+const process_click = (value: "child"|"free_play") => {
   if (!value) return
 
-  load_defaults(value)
-  currentPage.value++
+  if (value === "free_play") {
+    load_defaults("free_play")
+    currentPage.value = pages.CONSENT
+    return
+  }
+
+  currentPage.value = pages.DIFFICULTY
 }
 </script>
 
@@ -24,35 +29,35 @@ const process_click = (value: "adult"|"child") => {
   >
     <v-timeline-item
       size="x-large"
-      :icon-color="difficultySelected? 'secondary' : 'primary'"
+      :icon-color="modeSelected? 'secondary' : 'primary'"
       icon="mdi-cog-outline"
-      :dot-color="difficultySelected? 'primary' : 'secondary'"
+      :dot-color="modeSelected? 'primary' : 'secondary'"
     >
       <v-card class="pa-4" variant="text">
-        <v-card-title>About you</v-card-title>
+        <v-card-title>Game mode</v-card-title>
         <p class="text-body-1 mt-4">
-          Please <strong>click the button</strong> that best describes you.
+          Click the picture for the <strong>game mode</strong> you want to play.
         </p>
-        <v-item-group selected-class="bg-primary" class="mb-4" v-model="difficultySelected">
+        <v-item-group selected-class="bg-primary" class="mb-4" v-model="modeSelected">
           <v-container>
             <v-row>
               <v-col
                 cols="6"
               >
-                <v-item value="child" v-slot="{ selectedClass, select }">
+                <v-item value="free_play" v-slot="{ selectedClass, select }">
                   <v-card
                     :class="['mx-auto', 'py-2', selectedClass]"
                     color="primary"
                     variant="tonal"
                     height="200"
-                    @click="() => {select!(true); process_click('child')}"
+                    @click="() => {select!(true); process_click('free_play')}"
                   >
                     <v-img
-                      :src="child_img"
+                      :src="explore_img"
                       height="80%"
                     ></v-img>
                     <v-card-title class="text-center text-black">
-                      Child
+                      Explore
                     </v-card-title>
                   </v-card>
                 </v-item>
@@ -60,20 +65,20 @@ const process_click = (value: "adult"|"child") => {
               <v-col
                 cols="6"
               >
-                <v-item value="adult" v-slot="{ selectedClass, select }">
+                <v-item value="child" v-slot="{ selectedClass, select }">
                   <v-card
                     :class="['mx-auto', 'py-2', selectedClass]"
                     color="primary"
                     height="200"
                     variant="tonal"
-                    @click="() => {select!(true); process_click('adult')}"
+                    @click="() => {select!(true); process_click('child')}"
                   >
                     <v-img
-                      :src="adult_img"
+                      :src="challenge_img"
                       height="80%"
                     ></v-img>
                     <v-card-title class="text-center text-black">
-                      Adult
+                      Challenge
                     </v-card-title>
                   </v-card>
                 </v-item>
