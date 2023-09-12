@@ -44,7 +44,7 @@
     "@babel/types": "^7.21.4",
     "@excaliburjs/dev-tools": "^0.28.0",
     "@excaliburjs/testing": "^0.25.0",
-    "@types/node": "^18.15.0",
+    "@types/node": "^20.6.0",
     "@types/webfontloader": "^1.6.35",
     "@vitejs/plugin-vue": "^4.0.0",
     "@vue/eslint-config-typescript": "^11.0.0",
