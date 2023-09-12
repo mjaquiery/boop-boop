@@ -8,12 +8,14 @@ export default class Thief extends Actor {
   needyAnimation: Animation|null = null;
   unneedyAnimation: Animation|null = null;
 
+  click_buffer_scale: number = 0.8;
+
   constructor(props?: any) {
     const defaults = {
       x: 150,
       y: 150,
-      width: 20,
-      height: 30,
+      width: 26,
+      height: 34,
       duration: 1000,
       z: 10,
     }
@@ -53,7 +55,10 @@ export default class Thief extends Actor {
     const sprite = this.spriteSheet.getSprite(0, 0);
     if (sprite) {
       this.spriteSheet.sprites.forEach(
-        (sprite) => sprite.destSize = {width: this.width, height: this.height}
+        (sprite) => sprite.destSize = {
+          width: this.width * this.click_buffer_scale,
+          height: this.height * this.click_buffer_scale
+        }
       );
       this.graphics.use(sprite)
     }
